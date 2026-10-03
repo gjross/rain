@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#121211">
+<title>Rain Chance</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f3f3f1;
+  --surface: #fcfcfb;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #85847f;
+  --grid: #e4e3df;
+  --past: rgba(0,0,0,.035);
+  --border: #e4e3df;
+  --btn: #ecebe7;
+  --btn-text: #0b0b0b;
+  --primary: #2a78d6;
+  --primary-text: #ffffff;
+  --s1: #2a78d6;   /* radar */
+  --s2: #eb6834;   /* HRRR */
+  --s3: #1baf7a;   /* NBM */
+  --r1: #b7d3f6;   /* light rain */
+  --r2: #5598e7;   /* moderate */
+  --r3: #1c5cab;   /* heavy */
+  --r4: #0d366b;   /* violent */
+  --map-bg: #e9e9e6;
+  --ring: rgba(0,0,0,.35);
+  --pin: #e34948;
+  --warn: #b26a00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --text: #ffffff;
+    --text-2: #c3c2b7;
+    --muted: #8f8e86;
+    --grid: #2e2e2b;
+    --past: rgba(255,255,255,.035);
+    --border: #2e2e2b;
+    --btn: #2a2a28;
+    --btn-text: #ffffff;
+    --primary: #3987e5;
+    --primary-text: #ffffff;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --r1: #184f95;
+    --r2: #2a78d6;
+    --r3: #6da7ec;
+    --r4: #cde2fb;
+    --map-bg: #0e0e0e;
+    --ring: rgba(255,255,255,.4);
+    --pin: #ff6b6b;
+    --warn: #fab219;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --text: #ffffff; --text-2: #c3c2b7; --muted: #8f8e86;
+  --grid: #2e2e2b; --past: rgba(255,255,255,.035); --border: #2e2e2b; --btn: #2a2a28; --btn-text: #ffffff;
+  --primary: #3987e5; --primary-text: #ffffff; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --r1: #184f95; --r2: #2a78d6; --r3: #6da7ec; --r4: #cde2fb; --map-bg: #0e0e0e;
+  --ring: rgba(255,255,255,.4); --pin: #ff6b6b; --warn: #fab219;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: max(12px, env(safe-area-inset-top)) 16px 32px;
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 640px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: 14px; margin: 0; font-weight: 600; color: var(--text); }
+.place { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.actions { display: flex; gap: 8px; margin: 12px 0 6px; }
+button {
+  font: inherit; font-size: 14px; border: 0; border-radius: 10px; padding: 10px 12px;
+  background: var(--btn); color: var(--btn-text); cursor: pointer; white-space: nowrap;
+}
+button.primary { background: var(--primary); color: var(--primary-text); font-weight: 600; flex: 1; }
+button:disabled { opacity: .5; cursor: default; }
+.status { min-height: 18px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.status.err { color: var(--warn); }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px; margin-bottom: 12px;
+}
+.card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.headline { font-size: 24px; font-weight: 650; letter-spacing: -.015em; line-height: 1.2; }
+.subline { color: var(--text-2); margin-top: 6px; font-size: 14px; }
+.subline div + div { margin-top: 2px; }
+.next {
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--text-2);
+}
+.next b { color: var(--text); }
+.next .why { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.stale { color: var(--warn); }
+.mapwrap { position: relative; width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--map-bg); }
+.mapwrap canvas { width: 100%; height: 100%; display: block; }
+.mapempty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px; text-align: center; padding: 20px;
+}
+.maptime {
+  position: absolute; left: 8px; top: 8px; padding: 3px 8px; border-radius: 6px;
+  background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.slider { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.slider input { flex: 1; accent-color: var(--primary); }
+.slider button { padding: 6px 12px; }
+#leadLbl { font-size: 12px; color: var(--text-2); min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+#motion { margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.sw.box { height: 10px; width: 10px; border-radius: 2px; }
+.chartwrap { position: relative; touch-action: pan-y; }
+.chartwrap canvas { width: 100%; display: block; }
+.tip {
+  position: absolute; top: 0; pointer-events: none; display: none; z-index: 2;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 8px; font-size: 12px; line-height: 1.45; color: var(--text);
+  box-shadow: 0 4px 14px rgba(0,0,0,.18); white-space: nowrap;
+}
+.tip .t { color: var(--text-2); margin-bottom: 2px; }
+.tip .row { display: flex; align-items: center; gap: 6px; }
+.ramp { display: flex; gap: 10px; font-size: 11px; color: var(--muted); margin-top: 4px; flex-wrap: wrap; }
+.ramp span { display: inline-flex; align-items: center; gap: 4px; }
+details summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+details p, details li { color: var(--text-2); font-size: 13px; }
+details ul { padding-left: 18px; }
+footer { color: var(--muted); font-size: 11px; text-align: center; margin-top: 8px; }
+@media (max-width: 360px) {           /* Fold cover screen */
+  body { padding-left: 10px; padding-right: 10px; }
+  .actions { gap: 6px; }
+  button { padding: 10px 9px; font-size: 13px; }
+  .card { padding: 12px; }
+  .headline { font-size: 22px; }
+}
+@media (min-width: 720px) {           /* Fold inner screen, tablets */
+  main { max-width: 1100px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  .cols .card { margin-bottom: 12px; }
+  .actions { max-width: 520px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Rain chance</h1>
+    <div id="place" class="place"></div>
+  </header>
+
+  <div class="actions">
+    <button id="btnRefresh" class="primary">↻ Refresh</button>
+    <button id="btnGps">📍 My location</button>
+    <button id="btnHome">⌂ Hardin</button>
+  </div>
+  <div id="status" class="status"></div>
+
+  <div class="cols">
+  <div class="col">
+  <section class="card">
+    <div id="headline" class="headline">Tap Refresh to pull radar and models</div>
+    <div id="subline" class="subline"></div>
+    <div id="nextPull" class="next" hidden></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>Radar</h2><span id="radarStamp" class="muted small"></span></div>
+    <div class="mapwrap">
+      <canvas id="map" width="720" height="720"></canvas>
+      <div id="mapTime" class="maptime" hidden></div>
+      <div id="mapEmpty" class="mapempty">The map loads with each refresh</div>
+    </div>
+    <div class="slider">
+      <button id="btnPlay" disabled aria-label="Play">▶</button>
+      <input type="range" id="lead" min="-30" max="120" step="5" value="0" disabled aria-label="Radar time">
+      <span id="leadLbl"></span>
+    </div>
+    <div id="motion" class="muted small"></div>
+  </section>
+  </div>
+  <div class="col">
+
+  <section class="card">
+    <div class="card-h"><h2>Next 2 hours · radar</h2><span class="muted small">5-min steps</span></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--s1)"></i>Chance of rain at this spot</span>
+    </div>
+    <div class="chartwrap"><canvas id="chartA"></canvas><div id="tipA" class="tip"></div></div>
+    <div class="ramp" id="rampA"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>Next 12 hours · models</h2><span id="modelStamp" class="muted small"></span></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--s1)"></i>Radar (first 2 h)</span>
+      <span><i class="sw" style="background:var(--s2)"></i>HRRR · rain within 20 km</span>
+      <span><i class="sw" style="background:var(--s3)"></i>NBM hourly chance</span>
+    </div>
+    <div class="chartwrap"><canvas id="chartB"></canvas><div id="tipB" class="tip"></div></div>
+    <div class="ramp" id="rampB"></div>
+  </section>
+  </div>
+  </div>
+
+  <details class="card">
+    <summary>How this works</summary>
+    <ul>
+      <li><b>Radar (0–2 h).</b> The last 30 minutes of NEXRAD 5-minute mosaics around you, 400 km across. Storm motion is measured by matching echoes between scans 15 minutes apart, then the current rain field is pushed forward along that motion. 60 slightly-perturbed runs (speed, direction, position) give the chance: the share of runs with rain (≥18 dBZ, about 0.5 mm/h) over your spot. It cannot create new storms. Pop-up cells that haven't formed yet won't show here.</li>
+      <li><b>HRRR (0–12 h).</b> NOAA's 3 km storm-resolving model at 15-minute steps, sampled at 17 points out to 20 km. The orange line is the share of those points with rain within ±15 min. That's a neighborhood chance, because a storm forecast 8 km off is still a useful forecast. The intensity strip is HRRR right at your spot.</li>
+      <li><b>NBM.</b> The National Blend of Models' calibrated hourly chance of rain, close to what the NWS forecast says.</li>
+      <li><b>Pulls.</b> Nothing loads until you tap a button. "Next useful refresh" is when new data that could change the answer is due: the next radar scan when rain is close, otherwise the next HRRR run.</li>
+    </ul>
+  </details>
+
+  <footer>
+    Radar: NOAA NEXRAD via Iowa Environmental Mesonet · Models: NOAA HRRR &amp; NBM via Open-Meteo (CC BY 4.0) · Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors
+  </footer>
+</main>
+
+<script>
+'use strict';
+
+// ─── constants ──────────────────────────────────────────────────────────────
+const HOME = { key: 'home', name: '4201 S Hardin Blvd, McKinney', lat: 33.15666, lon: -96.66064 };
+
+// IEM N0Q composite palette: index i → dBZ = i*0.5 − 32 (index 0 = no data).
+const PAL_HEX = '00000085718f85728f86738d87758b87768b887789897987897a878a7b858b7d848b7e848c7f828d81808d82808e837e8f847c8f857c90877b918879918979928b77938d759691539894579b975b9d9a60a09d64a3a068a5a36da8a671aaa976adac7ab0af7eb2b283b7b88cbabb90bdbe94bfc199c2c49dc4c7a2c7caa6cacdaaccd0afd2d4b4cfd2b4c9ccb4c6c9b4c3c7b4c0c4b4bdc1b4b9beb4b6bbb4b3b9b4b0b6b4adb3b4aab0b4a4abb4a0a8b49da5b49aa2b497a0b4949db4919ab4949bb59098b48c95b38892b2808cb07c89af7886ae7483ac7080ab6c7daa6779a96376a85f73a75b70a6576da44f67a24b64a14761a0435e9f415b9e4361a24568a6486faa4a76ae4d7db24f84b6518bbb5699c3599fc75ba6cb5eadcf60b4d462bbd865c2dc67c9e06ad0e46fd6e868d6d759d6b352d6a24bd69043d67e3cd66d35d65b11d51811d11710cd1710c81610c4160fbc150fb7140eb3140eaf130eab130da6120da2120d9e110c99110c95100c91100b880f0b840e0a800e0a7c0d0a770d09730c096f0c096b0b08660b08620a095e09327308467d085b88076f9207849d0698a806adb205c1bd05d6c704ead204ffe200ffd800ffd300ffce00ffc900ffc400ffc000ffbb00ffb600ffb100ffac00ffa700ffa200ff9900ff9400ff8f00ff8a00ff8500ff8000ff0000f80000f10000ea0000e30000d50000cd0000c60000bf0000b80000b10000aa0000a300009b00009400008d00007f0000780000710000fffffffff5ffffeaffffdfffffd4ffffc9ffffbeffffb3ffff9dffff92ffff75fffc6bfdf960faf656f7f34bf4f040f1ed36efea2bece720e9e10be3b200ffac00fca400f79b00f49300ef8800ea8300e87900e27200dd6900db05ecf005ebf005eaf005dde005dce005dbe005cdd005ccd004bdc004bcc004bbc004aeb004adb0049ea0049da0049ca0038e90038d90038c90037e80037d80036f70036e70036d70025f60025e60024f50024e50024d50023f40023e40023d40013030012f30012020011f20011e203a67b53a66b53a65b53a64b53a63b53a62b5';
+
+const N = 360;              // radar grid, pixels per side
+const HALF_KM = 200;        // half-width of the radar box (ground km)
+const KM_PX = 2 * HALF_KM / N;
+const THR_DBZ = 18;         // "rain" ≈ 0.5 mm/h
+const MEMBERS = 60;
+const R_E = 6378137, D2R = Math.PI / 180;
+
+const PAL = [];
+for (let i = 0; i < 256; i++) PAL.push(parseInt(PAL_HEX.substr(i * 6, 6), 16));
+const RGB2IDX = new Map(PAL.map((c, i) => [c, i]));
+const DBZ = new Float32Array(256), RATE = new Float32Array(256), FEAT = new Float32Array(256);
+const zr = dbz => Math.pow(Math.pow(10, Math.min(dbz, 53) / 10) / 200, 1 / 1.6);   // Marshall–Palmer, hail-capped
+for (let i = 1; i < 256; i++) {
+  const d = i * 0.5 - 32;
+  DBZ[i] = d;
+  RATE[i] = d < 10 ? 0 : zr(d);
+  FEAT[i] = d < 10 ? 0 : Math.min(d, 55) - 10;
+}
+DBZ[0] = -99;
+const THR_RATE = zr(THR_DBZ);
+
+// ─── state ──────────────────────────────────────────────────────────────────
+const S = {
+  loc: { ...HOME },
+  rl: null,        // radar results (light, cacheable)
+  rh: null,        // radar heavy: frames + motion field (this session only)
+  model: null,
+  pulledAt: null,
+  busy: false,
+  extrap: new Map(),
+  tiles: null,
+  lead: 0,
+  playTimer: null,
+};
+
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const MIN = 60e3, HOUR = 3600e3;
+
+// ─── formatting ─────────────────────────────────────────────────────────────
+const fmtTime = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+function fmtTick(t) {
+  const d = new Date(t);
+  const h = d.getHours() % 12 || 12, ap = d.getHours() < 12 ? 'a' : 'p';
+  return d.getMinutes() === 0 ? `${h}${ap}` : `${h}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+function fmtAgo(t) {
+  const m = Math.round((Date.now() - t) / MIN);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  return `${h} h ${m % 60} min ago`;
+}
+function fmtIn(t) {
+  const m = Math.round((t - Date.now()) / MIN);
+  if (m <= 0) return 'now';
+  if (m < 60) return `in ${m} min`;
+  return `in ${Math.floor(m / 60)} h ${m % 60} min`;
+}
+const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+function category(rate) {
+  if (rate < THR_RATE) return null;
+  if (rate < 2.5) return { name: 'light', v: '--r1' };
+  if (rate < 10) return { name: 'moderate', v: '--r2' };
+  if (rate < 50) return { name: 'heavy', v: '--r3' };
+  return { name: 'violent', v: '--r4' };
+}
+const fmtRate = r => r < 0.05 ? '0' : r < 10 ? r.toFixed(1) : Math.round(r).toString();
+
+// ─── networking ─────────────────────────────────────────────────────────────
+async function fetchT(url, ms = 25000) {
+  const ac = new AbortController();
+  const id = setTimeout(() => ac.abort(), ms);
+  try { return await fetch(url, { signal: ac.signal, cache: 'no-store' }); }
+  finally { clearTimeout(id); }
+}
+async function getJSON(url) {
+  const r = await fetchT(url);
+  if (!r.ok) throw new Error(`${r.status} from ${new URL(url).host}`);
+  return r.json();
+}
+
+// ─── radar: frames ──────────────────────────────────────────────────────────
+function mercBox(loc) {
+  const mx = R_E * loc.lon * D2R;
+  const my = R_E * Math.log(Math.tan(Math.PI / 4 + loc.lat * D2R / 2));
+  const h = HALF_KM * 1000 / Math.cos(loc.lat * D2R);
+  return { mx, my, h, bb: [mx - h, my - h, mx + h, my + h] };
+}
+const isoMin = t => new Date(t).toISOString().slice(0, 16) + 'Z';
+
+const nearCache = new Map();
+function nearestIdx(r, g, b) {
+  const key = (r << 16) | (g << 8) | b;
+  if (nearCache.has(key)) return nearCache.get(key);
+  let best = 0, bd = 1e9;
+  for (let i = 1; i < 256; i++) {
+    const c = PAL[i], dr = (c >> 16) - r, dg = ((c >> 8) & 255) - g, db = (c & 255) - b;
+    const d = dr * dr + dg * dg + db * db;
+    if (d < bd) { bd = d; best = i; }
+  }
+  nearCache.set(key, best);
+  return best;
+}
+
+async function fetchFrame(t, box) {
+  const u = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q-t.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap'
+    + '&LAYERS=nexrad-n0q-wmst&STYLES=&TIME=' + new Date(t).toISOString().slice(0, 16) + ':00Z'
+    + '&SRS=EPSG:3857&BBOX=' + box.bb.map(v => v.toFixed(1)).join(',')
+    + `&WIDTH=${N}&HEIGHT=${N}&FORMAT=image/png&TRANSPARENT=true`;
+  const r = await fetchT(u);
+  if (!r.ok) throw new Error('radar frame ' + r.status);
+  const blob = await r.blob();
+  if (!blob.type.includes('png')) throw new Error('radar frame not an image');
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement('canvas');
+  c.width = N; c.height = N;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(bmp, 0, 0);
+  const img = g.getImageData(0, 0, N, N), d = img.data;
+  const idx = new Uint8Array(N * N);
+  let opaque = 0;
+  for (let p = 0, i = 0; p < N * N; p++, i += 4) {
+    if (d[i + 3] < 128) { d[i + 3] = 0; continue; }
+    opaque++;
+    const k = RGB2IDX.get((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+    const ix = k === undefined ? nearestIdx(d[i], d[i + 1], d[i + 2]) : k;
+    idx[p] = ix;
+    d[i + 3] = DBZ[ix] < 10 ? 0 : 255;     // hide clear-air junk on the map
+  }
+  g.putImageData(img, 0, 0);
+  return { t, idx, canvas: c, rgba: img, opaque };
+}
+
+async function pullRadar(loc, progress) {
+  const now = Date.now();
+  const li = await getJSON('https://mesonet.agron.iastate.edu/json/radar.py?operation=list&product=N0Q&radar=USCOMP'
+    + `&start=${isoMin(now - 55 * MIN)}&end=${isoMin(now + MIN)}`);
+  const scans = (li.scans || []).map(s => Date.parse(s.ts)).filter(t => t <= now).sort((a, b) => a - b).slice(-8);
+  if (scans.length < 2) throw new Error('no recent radar scans listed');
+  const box = mercBox(loc);
+  let done = 0;
+  const got = await Promise.all(scans.map(t => fetchFrame(t, box)
+    .then(f => { progress(`radar ${++done}/${scans.length}`); return f; })
+    .catch(() => null)));
+  const frames = got.filter(Boolean);
+  // the newest listed scan is sometimes not rendered yet and comes back blank
+  while (frames.length > 2 && frames[frames.length - 1].opaque === 0 && frames[frames.length - 2].opaque > 500) frames.pop();
+  const use = frames.slice(-7);
+  if (use.length < 2) throw new Error('not enough radar frames came back');
+  return analyzeRadar(use, box);
+}
+
+// ─── radar: motion ──────────────────────────────────────────────────────────
+const DS = 3, G = N / DS;     // coarse grid for matching (~3.3 km cells)
+function coarse(fr) {
+  const out = new Float32Array(G * G);
+  for (let y = 0; y < N; y++) {
+    const row = ((y / DS) | 0) * G;
+    for (let x = 0; x < N; x++) out[row + ((x / DS) | 0)] += FEAT[fr.idx[y * N + x]];
+  }
+  for (let i = 0; i < out.length; i++) out[i] /= DS * DS;
+  return out;
+}
+
+// Block matching: where did each 53 km block of echo move between frames a and b?
+function matchBlocks(a, b, dtMin, weight, vecs) {
+  const B = 16, SR = 8, STR = 8, W = 2 * SR + 1;
+  const surf = new Float32Array(W * W);
+  for (let by = 0; by + B <= G; by += STR) {
+    for (let bx = 0; bx + B <= G; bx += STR) {
+      let cnt = 0;
+      for (let y = 0; y < B; y++) for (let x = 0; x < B; x++) if (a[(by + y) * G + bx + x] > 2) cnt++;
+      if (cnt < B * B * 0.08) continue;
+      let best = Infinity, bi = 0, tot = 0;
+      for (let dy = -SR; dy <= SR; dy++) {
+        for (let dx = -SR; dx <= SR; dx++) {
+          let s = 0, n = 0;
+          for (let y = 0; y < B; y++) {
+            const yy = by + y + dy;
+            if (yy < 0 || yy >= G) continue;
+            const ar = (by + y) * G + bx, br = yy * G + bx + dx;
+            for (let x = 0; x < B; x++) {
+              const xx = bx + x + dx;
+              if (xx < 0 || xx >= G) continue;
+              const d = a[ar + x] - b[br + x];
+              s += d * d; n++;
+            }
+          }
+          s = n > B * B * 0.5 ? s / n : 1e9;
+          const k = (dy + SR) * W + dx + SR;
+          surf[k] = s; tot += Math.min(s, 1e4);
+          if (s < best) { best = s; bi = k; }
+        }
+      }
+      const mean = tot / surf.length;
+      const q = (mean - best) / (mean + 1e-6);
+      if (q < 0.15) continue;
+      const ix = bi % W, iy = (bi / W) | 0;
+      if (ix === 0 || iy === 0 || ix === W - 1 || iy === W - 1) continue;   // ran off the search window
+      const sub = (l, c, r) => { const den = l - 2 * c + r; return den > 0 ? clamp((l - r) / (2 * den), -0.5, 0.5) : 0; };
+      const fx = sub(surf[bi - 1], best, surf[bi + 1]);
+      const fy = sub(surf[bi - W], best, surf[bi + W]);
+      const dxc = ix - SR + fx, dyc = iy - SR + fy;
+      vecs.push({
+        x: (bx + B / 2) * DS, y: (by + B / 2) * DS,
+        u: dxc * DS / dtMin, v: dyc * DS / dtMin,    // full-res px per minute
+        w: weight * q * cnt / (B * B),
+      });
+    }
+  }
+}
+
+function wMedian(vals, ws) {
+  const o = vals.map((v, i) => [v, ws[i]]).sort((p, q) => p[0] - q[0]);
+  const half = ws.reduce((s, w) => s + w, 0) / 2;
+  let acc = 0;
+  for (const [v, w] of o) { acc += w; if (acc >= half) return v; }
+  return o.length ? o[o.length - 1][0] : 0;
+}
+
+const VS = 10, VGN = N / VS + 1;
+function buildField(vecs) {
+  const U = new Float32Array(VGN * VGN), V = new Float32Array(VGN * VGN);
+  if (!vecs.length) return { U, V, ug: 0, vg: 0, n: 0 };
+  let ug = wMedian(vecs.map(p => p.u), vecs.map(p => p.w));
+  let vg = wMedian(vecs.map(p => p.v), vecs.map(p => p.w));
+  const keep = vecs.filter(p => Math.hypot(p.u - ug, p.v - vg) < 0.7);   // 0.7 px/min ≈ 47 km/h off the median
+  const use = keep.length >= 2 ? keep : vecs;
+  const sw = use.reduce((s, p) => s + p.w, 0);
+  ug = use.reduce((s, p) => s + p.w * p.u, 0) / sw;
+  vg = use.reduce((s, p) => s + p.w * p.v, 0) / sw;
+  const sig2 = 2 * 55 * 55, lam = 0.2;
+  for (let j = 0; j < VGN; j++) {
+    for (let i = 0; i < VGN; i++) {
+      const x = i * VS, y = j * VS;
+      let su = lam * ug, sv = lam * vg, ws = lam;
+      for (const p of use) {
+        const w = p.w * Math.exp(-((p.x - x) ** 2 + (p.y - y) ** 2) / sig2);
+        su += w * p.u; sv += w * p.v; ws += w;
+      }
+      U[j * VGN + i] = su / ws; V[j * VGN + i] = sv / ws;
+    }
+  }
+  return { U, V, ug, vg, n: use.length };
+}
+
+let _u = 0, _v = 0;
+function vAt(F, x, y) {
+  const gx = clamp(x / VS, 0, VGN - 1.001), gy = clamp(y / VS, 0, VGN - 1.001);
+  const i = gx | 0, j = gy | 0, fx = gx - i, fy = gy - j, k = j * VGN + i;
+  _u = (F.U[k] * (1 - fx) + F.U[k + 1] * fx) * (1 - fy) + (F.U[k + VGN] * (1 - fx) + F.U[k + VGN + 1] * fx) * fy;
+  _v = (F.V[k] * (1 - fx) + F.V[k + 1] * fx) * (1 - fy) + (F.V[k + VGN] * (1 - fx) + F.V[k + VGN + 1] * fx) * fy;
+}
+
+function rate3(idx, x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  if (xi < 1 || yi < 1 || xi >= N - 1 || yi >= N - 1) return null;
+  let s = 0;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) s += RATE[idx[(yi + dy) * N + xi + dx]];
+  return s / 9;
+}
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+
+function analyzeRadar(frames, box) {
+  const n = frames.length, last = frames[n - 1], T0 = last.t;
+  const co = frames.map(coarse);
+  const pickStart = e => {
+    let bi = -1, bd = 1e9;
+    for (let i = 0; i < e; i++) {
+      const dt = (frames[e].t - frames[i].t) / MIN;
+      if (dt < 8 || dt > 22) continue;
+      if (Math.abs(dt - 15) < bd) { bd = Math.abs(dt - 15); bi = i; }
+    }
+    return bi;
+  };
+  const vecs = [];
+  const s1 = pickStart(n - 1);
+  if (s1 >= 0) {
+    matchBlocks(co[s1], co[n - 1], (last.t - frames[s1].t) / MIN, 1, vecs);
+    const s2 = pickStart(s1);
+    if (s2 >= 0) matchBlocks(co[s2], co[s1], (frames[s1].t - frames[s2].t) / MIN, 0.6, vecs);
+  } else {
+    matchBlocks(co[n - 2], co[n - 1], (last.t - frames[n - 2].t) / MIN, 1, vecs);
+  }
+  const F = buildField(vecs);
+
+  const C = N / 2;
+  const past = frames.map(f => ({ t: f.t, rate: rate3(f.idx, C, C) ?? 0 }));
+  const rainingNow = (rate3(last.idx, C, C) ?? 0) >= THR_RATE;
+
+  // ensemble of perturbed backward trajectories
+  const rng = mulberry32(20261003);
+  const leads = []; for (let L = 0; L <= 120; L += 5) leads.push(L);
+  const hits = new Float32Array(leads.length), wetSum = new Float32Array(leads.length);
+  for (let m = 0; m < MEMBERS; m++) {
+    const s = clamp(1 + 0.18 * gauss(rng), 0.55, 1.6), a = 0.24 * gauss(rng);
+    const ox = gauss(rng), oy = gauss(rng), ca = Math.cos(a), sa = Math.sin(a);
+    let x = C, y = C;
+    for (let li = 0; li < leads.length; li++) {
+      if (li > 0) {
+        for (let k = 0; k < 2; k++) {          // two 2.5-min steps per 5-min lead
+          vAt(F, x, y);
+          x -= s * (ca * _u - sa * _v) * 2.5;
+          y -= s * (sa * _u + ca * _v) * 2.5;
+        }
+      }
+      const sig = 1.5 + 0.12 * leads[li];        // position uncertainty grows ~7 km/h
+      const r = rate3(last.idx, x + sig * ox, y + sig * oy) ?? 0;
+      if (r >= THR_RATE) { hits[li]++; wetSum[li] += r; }
+    }
+  }
+  const P = leads.map((L, i) => ({ t: T0 + L * MIN, v: 100 * hits[i] / MEMBERS }));
+  const I = leads.map((L, i) => ({ t: T0 + L * MIN, rate: hits[i] ? wetSum[i] / hits[i] : 0 }));   // intensity if it rains
+
+  // nearest rain to the spot right now
+  let nd = Infinity, nx = 0, ny = 0;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (DBZ[last.idx[y * N + x]] < THR_DBZ) continue;
+    const d = (x + 0.5 - C) ** 2 + (y + 0.5 - C) ** 2;
+    if (d < nd) { nd = d; nx = x + 0.5 - C; ny = C - (y + 0.5); }
+  }
+  const nearest = isFinite(nd) ? { km: Math.sqrt(nd) * KM_PX, dir: compass(Math.atan2(nx, ny) / D2R) } : null;
+
+  const speed = Math.hypot(F.ug, F.vg) * KM_PX * 60;
+  const motion = F.n ? { kmh: speed, toward: compass(Math.atan2(F.ug, -F.vg) / D2R), n: F.n } : null;
+
+  return {
+    rl: { T0, P, I, past, rainingNow, nearest, motion, frames: frames.map(f => f.t) },
+    rh: { frames, F, box },
+  };
+}
+
+// ─── models ─────────────────────────────────────────────────────────────────
+function ringPoints(loc) {
+  const pts = [[loc.lat, loc.lon]];
+  for (const km of [10, 20]) {
+    for (let k = 0; k < 8; k++) {
+      const b = k * 45 * D2R;
+      pts.push([loc.lat + km / 111.32 * Math.cos(b), loc.lon + km / (111.32 * Math.cos(loc.lat * D2R)) * Math.sin(b)]);
+    }
+  }
+  return pts;
+}
+
+async function pullModels(loc) {
+  const pts = ringPoints(loc);
+  const lats = pts.map(p => p[0].toFixed(4)).join(','), lons = pts.map(p => p[1].toFixed(4)).join(',');
+  const base = 'https://api.open-meteo.com/v1/forecast?timeformat=unixtime&timezone=UTC';
+  const [hr, nbm, mh, mn] = await Promise.allSettled([
+    getJSON(`${base}&latitude=${lats}&longitude=${lons}&minutely_15=precipitation&models=ncep_hrrr_conus&forecast_minutely_15=53&past_minutely_15=2`),
+    getJSON(`${base}&latitude=${loc.lat.toFixed(4)}&longitude=${loc.lon.toFixed(4)}&hourly=precipitation_probability,precipitation&models=ncep_nbm_conus&forecast_hours=14&past_hours=1`),
+    getJSON('https://api.open-meteo.com/data/ncep_hrrr_conus/static/meta.json'),
+    getJSON('https://api.open-meteo.com/data/ncep_nbm_conus/static/meta.json'),
+  ]);
+  const out = { errors: [] };
+
+  if (hr.status === 'fulfilled') {
+    const arr = Array.isArray(hr.value) ? hr.value : [hr.value];
+    const times = arr[0].minutely_15.time.map(t => t * 1000);
+    const series = arr.map(o => o.minutely_15.precipitation.map(v => v ?? 0));
+    const point = series[0].map(v => v * 4);    // mm per 15 min → mm/h
+    const nb = times.map((_, i) => {
+      let wet = 0;
+      for (const s of series) {
+        const m = Math.max(s[i - 1] ?? 0, s[i] ?? 0, s[i + 1] ?? 0);
+        if (m >= 0.1) wet++;
+      }
+      return 100 * wet / series.length;
+    });
+    const valid = arr[0].minutely_15.precipitation.map(v => v != null);
+    out.hrrr = { times, point, nb, valid };
+  } else out.errors.push('HRRR: ' + hr.reason.message);
+
+  if (nbm.status === 'fulfilled') {
+    const h = nbm.value.hourly;
+    out.nbm = { times: h.time.map(t => t * 1000), pop: h.precipitation_probability };
+  } else out.errors.push('NBM: ' + nbm.reason.message);
+
+  if (mh.status === 'fulfilled') {
+    out.hrrrMeta = { init: mh.value.last_run_initialisation_time * 1000, avail: mh.value.last_run_availability_time * 1000, every: mh.value.update_interval_seconds * 1000 };
+  }
+  if (mn.status === 'fulfilled') {
+    out.nbmMeta = { init: mn.value.last_run_initialisation_time * 1000, avail: mn.value.last_run_availability_time * 1000, every: mn.value.update_interval_seconds * 1000 };
+  }
+  if (!out.hrrr && !out.nbm) throw new Error(out.errors.join(' · '));
+  return out;
+}
+
+// ─── map ────────────────────────────────────────────────────────────────────
+function darkMode() {
+  const t = document.documentElement.dataset.theme;
+  if (t) return t === 'dark';
+  return matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function loadTiles(box) {
+  const z = 8, world = 256 * 2 ** z, span = 2 * Math.PI * R_E;
+  const wx0 = (box.bb[0] + Math.PI * R_E) / span * world, wx1 = (box.bb[2] + Math.PI * R_E) / span * world;
+  const wy0 = (Math.PI * R_E - box.bb[3]) / span * world, wy1 = (Math.PI * R_E - box.bb[1]) / span * world;
+  const W = $('map').width, sc = W / (wx1 - wx0);
+  const theme = darkMode() ? 'Dark' : 'Light';
+  const mk = layer => {
+    const list = [];
+    for (let ty = Math.floor(wy0 / 256); ty <= Math.floor(wy1 / 256); ty++) {
+      for (let tx = Math.floor(wx0 / 256); tx <= Math.floor(wx1 / 256); tx++) {
+        const img = new Image();
+        img.onload = () => scheduleMap();
+        img.src = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${theme}_Gray_${layer}/MapServer/tile/${z}/${ty}/${tx}`;
+        list.push({ img, x: (tx * 256 - wx0) * sc, y: (ty * 256 - wy0) * sc, s: 256 * sc });
+      }
+    }
+    return list;
+  };
+  return { base: mk('Base'), labels: mk('Reference') };
+}
+
+function extrapolated(L) {
+  if (S.extrap.has(L)) return S.extrap.get(L);
+  const { frames, F } = S.rh, src = frames[frames.length - 1].rgba.data;
+  const out = new ImageData(N, N), od = out.data;
+  const steps = Math.round(L / 5);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      let px = x + 0.5, py = y + 0.5;
+      for (let k = 0; k < steps; k++) { vAt(F, px, py); px -= _u * 5; py -= _v * 5; }
+      if (px < 0 || py < 0 || px >= N || py >= N) continue;
+      const si = ((py | 0) * N + (px | 0)) * 4, oi = (y * N + x) * 4;
+      od[oi] = src[si]; od[oi + 1] = src[si + 1]; od[oi + 2] = src[si + 2]; od[oi + 3] = src[si + 3];
+    }
+  }
+  const c = document.createElement('canvas');
+  c.width = N; c.height = N;
+  c.getContext('2d').putImageData(out, 0, 0);
+  S.extrap.set(L, c);
+  return c;
+}
+
+function radarImage(L) {
+  const { frames } = S.rh;
+  if (L <= 0) {
+    const target = S.rl.T0 + L * MIN;
+    let best = frames[0];
+    for (const f of frames) if (Math.abs(f.t - target) < Math.abs(best.t - target)) best = f;
+    return { c: best.canvas, t: best.t, obs: true };
+  }
+  return { c: extrapolated(L), t: S.rl.T0 + L * MIN, obs: false };
+}
+
+let mapQueued = false;
+function scheduleMap() {
+  if (mapQueued) return;
+  mapQueued = true;
+  requestAnimationFrame(() => { mapQueued = false; renderMap(); });
+}
+
+function renderMap() {
+  const cv = $('map'), g = cv.getContext('2d'), W = cv.width;
+  g.fillStyle = css('--map-bg');
+  g.fillRect(0, 0, W, W);
+  if (!S.rh) return;
+  const drawLayer = list => { for (const t of list) if (t.img.complete && t.img.naturalWidth) g.drawImage(t.img, t.x, t.y, t.s, t.s); };
+  if (S.tiles) drawLayer(S.tiles.base);
+  const im = radarImage(S.lead);
+  g.imageSmoothingEnabled = true;
+  g.globalAlpha = 0.82;
+  g.drawImage(im.c, 0, 0, W, W);
+  g.globalAlpha = 1;
+  if (S.tiles) drawLayer(S.tiles.labels);
+
+  const C = W / 2, pxKm = W / N / KM_PX;
+  g.strokeStyle = css('--ring');
+  g.lineWidth = 1.5;
+  g.setLineDash([6, 6]);
+  g.font = '600 20px system-ui, sans-serif';
+  g.fillStyle = css('--ring');
+  for (const km of [25, 50, 100]) {
+    g.beginPath(); g.arc(C, C, km * pxKm, 0, 2 * Math.PI); g.stroke();
+    g.fillText(`${km} km`, C + km * pxKm * 0.71 + 4, C - km * pxKm * 0.71 - 4);
+  }
+  g.setLineDash([]);
+
+  const mo = S.rl.motion;
+  if (mo && mo.kmh > 3) {
+    const u = S.rh.F.ug, v = S.rh.F.vg, len = Math.hypot(u, v);
+    const L = clamp(len * 30 * (W / N), 40, 160);      // ~30 min of travel
+    const ex = C + u / len * L, ey = C + v / len * L;
+    g.strokeStyle = '#ffffff';
+    g.lineWidth = 7;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(C, C); g.lineTo(ex, ey); g.stroke();
+    g.strokeStyle = '#111111';
+    g.lineWidth = 3.5;
+    g.beginPath(); g.moveTo(C, C); g.lineTo(ex, ey); g.stroke();
+    const ang = Math.atan2(ey - C, ex - C);
+    g.fillStyle = '#111111';
+    g.beginPath();
+    g.moveTo(ex + Math.cos(ang) * 10, ey + Math.sin(ang) * 10);
+    g.lineTo(ex + Math.cos(ang + 2.4) * 16, ey + Math.sin(ang + 2.4) * 16);
+    g.lineTo(ex + Math.cos(ang - 2.4) * 16, ey + Math.sin(ang - 2.4) * 16);
+    g.closePath(); g.fill();
+  }
+  g.fillStyle = css('--pin');
+  g.strokeStyle = '#ffffff';
+  g.lineWidth = 4;
+  g.beginPath(); g.arc(C, C, 11, 0, 2 * Math.PI); g.fill(); g.stroke();
+
+  const mt = $('mapTime');
+  mt.hidden = false;
+  mt.textContent = `${fmtTime(im.t)} · ${im.obs ? 'observed' : 'projected'}`;
+}
+
+function setLead(L) {
+  S.lead = L;
+  $('lead').value = L;
+  $('leadLbl').textContent = L === 0 ? 'latest' : (L > 0 ? `+${L} min` : `${L} min`);
+  scheduleMap();
+}
+
+function togglePlay() {
+  if (S.playTimer) { stopPlay(); return; }
+  $('btnPlay').textContent = '❚❚';
+  let L = S.lead >= 120 ? -30 : S.lead;
+  S.playTimer = setInterval(() => {
+    L += 5;
+    if (L > 120) L = -30;
+    setLead(L);
+  }, 450);
+}
+function stopPlay() {
+  clearInterval(S.playTimer);
+  S.playTimer = null;
+  $('btnPlay').textContent = '▶';
+}
+
+// ─── charts ─────────────────────────────────────────────────────────────────
+function seriesAt(s, t) {
+  if (s.kind === 'step') {
+    for (const p of s.pts) if (t > p.a && t <= p.b) return p.v;
+    return null;
+  }
+  const p = s.pts;
+  if (!p.length || t < p[0].t || t > p[p.length - 1].t) return null;
+  for (let i = 1; i < p.length; i++) {
+    if (t <= p[i].t) {
+      const f = (t - p[i - 1].t) / (p[i].t - p[i - 1].t || 1);
+      return p[i - 1].v + f * (p[i].v - p[i - 1].v);
+    }
+  }
+  return p[p.length - 1].v;
+}
+
+function drawChart(cv, hoverX) {
+  const sp = cv._spec;
+  if (!sp) return;
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, H = 196;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(H * dpr)) {
+    cv.width = Math.round(w * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+  }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, H);
+  const padL = 36, padR = 10, top = 8, plotH = 128, stripY = top + plotH + 10, stripH = 12, axisY = stripY + stripH + 16;
+  const pw = w - padL - padR;
+  const X = t => padL + (t - sp.t0) / (sp.t1 - sp.t0) * pw;
+  const Y = v => top + plotH * (1 - v / 100);
+  const grid = css('--grid'), muted = css('--muted'), text2 = css('--text-2');
+
+  if (sp.pastEnd && sp.pastEnd > sp.t0) {
+    g.fillStyle = css('--past');
+    g.fillRect(X(sp.t0), top, X(sp.pastEnd) - X(sp.t0), plotH);
+    g.fillStyle = muted;
+    g.font = '11px system-ui, sans-serif';
+    g.textAlign = 'center';
+    g.fillText('observed', (X(sp.t0) + X(sp.pastEnd)) / 2, top + 14);
+  }
+
+  g.lineWidth = 1;
+  g.font = '11px system-ui, sans-serif';
+  g.textAlign = 'right';
+  g.textBaseline = 'middle';
+  for (const v of [0, 25, 50, 75, 100]) {
+    g.strokeStyle = grid;
+    g.beginPath(); g.moveTo(padL, Math.round(Y(v)) + 0.5); g.lineTo(w - padR, Math.round(Y(v)) + 0.5); g.stroke();
+    if (v % 50 === 0) { g.fillStyle = muted; g.fillText(v + '%', padL - 6, Y(v)); }
+  }
+
+  for (const s of sp.series) {
+    const col = css(s.color);
+    g.strokeStyle = col;
+    g.lineWidth = 2;
+    g.lineJoin = 'round';
+    if (s.kind === 'step') {
+      g.beginPath();
+      let prev = null;
+      for (const p of s.pts) {
+        if (p.b < sp.t0 || p.a > sp.t1 || p.v == null) { prev = null; continue; }
+        const xa = X(Math.max(p.a, sp.t0)), xb = X(Math.min(p.b, sp.t1)), y = Y(p.v);
+        if (prev == null) g.moveTo(xa, y); else g.lineTo(xa, y);
+        g.lineTo(xb, y);
+        prev = p;
+      }
+      g.stroke();
+    } else {
+      const pts = s.pts.filter(p => p.t >= sp.t0 - 15 * MIN && p.t <= sp.t1 + 15 * MIN);
+      if (!pts.length) continue;
+      g.save();
+      g.beginPath(); g.rect(padL, 0, pw, H); g.clip();
+      if (s.fill) {
+        g.beginPath();
+        g.moveTo(X(pts[0].t), Y(0));
+        for (const p of pts) g.lineTo(X(p.t), Y(p.v));
+        g.lineTo(X(pts[pts.length - 1].t), Y(0));
+        g.closePath();
+        g.globalAlpha = 0.16; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
+      }
+      g.beginPath();
+      pts.forEach((p, i) => i ? g.lineTo(X(p.t), Y(p.v)) : g.moveTo(X(p.t), Y(p.v)));
+      g.stroke();
+      g.restore();
+    }
+  }
+
+  // intensity strip
+  g.fillStyle = grid;
+  g.beginPath(); g.roundRect(padL, stripY, pw, stripH, 3); g.fill();
+  for (const c of sp.strip) {
+    const cat = category(c.rate);
+    if (!cat || c.b < sp.t0 || c.a > sp.t1) continue;
+    const xa = X(Math.max(c.a, sp.t0)), xb = X(Math.min(c.b, sp.t1));
+    g.globalAlpha = c.alpha ?? 1;
+    g.fillStyle = css(cat.v);
+    g.fillRect(xa, stripY, Math.max(1, xb - xa - 1), stripH);
+  }
+  g.globalAlpha = 1;
+  g.fillStyle = muted;
+  g.textAlign = 'right';
+  g.fillText('rain', padL - 6, stripY + stripH / 2);
+
+  // time axis
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+  const ticks = makeTicks(sp.t0, sp.t1, sp.tickMin);
+  for (const t of ticks) {
+    const x = X(t);
+    g.strokeStyle = grid;
+    g.beginPath(); g.moveTo(Math.round(x) + 0.5, stripY + stripH); g.lineTo(Math.round(x) + 0.5, stripY + stripH + 4); g.stroke();
+    if (x > padL + 10 && x < w - padR - 10) { g.fillStyle = muted; g.fillText(fmtTick(t), x, axisY); }
+  }
+
+  // now
+  const nowT = Date.now();
+  if (nowT >= sp.t0 && nowT <= sp.t1) {
+    const x = Math.round(X(nowT)) + 0.5;
+    g.strokeStyle = text2;
+    g.setLineDash([3, 3]);
+    g.beginPath(); g.moveTo(x, top); g.lineTo(x, stripY + stripH); g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = text2;
+    g.textAlign = x > w - 40 ? 'right' : 'left';
+    g.fillText('now', x + (x > w - 40 ? -4 : 4), top + plotH - 6);
+  }
+
+  const tip = cv._tip;
+  if (hoverX == null || hoverX < padL || hoverX > w - padR) { tip.style.display = 'none'; return; }
+  const t = sp.t0 + (hoverX - padL) / pw * (sp.t1 - sp.t0);
+  g.strokeStyle = text2;
+  g.lineWidth = 1;
+  g.beginPath(); g.moveTo(Math.round(hoverX) + 0.5, top); g.lineTo(Math.round(hoverX) + 0.5, stripY + stripH); g.stroke();
+  const rows = [];
+  for (const s of sp.series) {
+    const v = seriesAt(s, t);
+    if (v == null) continue;
+    const surf = css('--surface');
+    g.fillStyle = css(s.color); g.strokeStyle = surf; g.lineWidth = 2;
+    g.beginPath(); g.arc(hoverX, Y(v), 4.5, 0, 2 * Math.PI); g.fill(); g.stroke();
+    rows.push(`<div class="row"><i class="sw" style="background:var(${s.color})"></i>${s.label}: <b>${Math.round(v)}%</b></div>`);
+  }
+  const cell = sp.strip.find(c => t > c.a && t <= c.b);
+  if (cell) {
+    const cat = category(cell.rate);
+    rows.push(`<div class="row"><i class="sw box" style="background:var(${cat ? cat.v : '--grid'})"></i>${sp.stripLabel}: <b>${cat ? `${cat.name} · ${fmtRate(cell.rate)} mm/h` : 'none'}</b></div>`);
+  }
+  tip.innerHTML = `<div class="t">${fmtTime(t)}</div>${rows.join('') || '<div class="muted">no data</div>'}`;
+  tip.style.display = 'block';
+  const tw = tip.offsetWidth;
+  tip.style.left = (hoverX + 12 + tw > w ? hoverX - 12 - tw : hoverX + 12) + 'px';
+}
+
+function makeTicks(t0, t1, stepMin) {
+  const d = new Date(t0);
+  d.setHours(0, 0, 0, 0);
+  const mid = d.getTime();
+  const m0 = Math.ceil((t0 - mid) / MIN / stepMin) * stepMin;
+  const out = [];
+  for (let m = m0; mid + m * MIN <= t1; m += stepMin) out.push(mid + m * MIN);
+  return out;
+}
+
+function hookChart(cv, tip) {
+  cv._tip = tip;
+  const at = e => e.clientX - cv.getBoundingClientRect().left;
+  cv.addEventListener('pointerdown', e => drawChart(cv, at(e)));
+  cv.addEventListener('pointermove', e => drawChart(cv, at(e)));
+  cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') drawChart(cv, null); });
+  cv.addEventListener('pointercancel', () => drawChart(cv, null));
+  document.addEventListener('pointerdown', e => { if (e.target !== cv) drawChart(cv, null); });
+}
+
+function rampHTML() {
+  return ['light', 'moderate', 'heavy', 'violent'].map((n, i) =>
+    `<span><i class="sw box" style="background:var(--r${i + 1})"></i>${n}</span>`).join('');
+}
+
+function renderCharts() {
+  const rl = S.rl, mo = S.model;
+  const cA = $('chartA'), cB = $('chartB');
+  if (rl) {
+    const strip = rl.past.map(p => ({ a: p.t - 5 * MIN, b: p.t, rate: p.rate }))
+      .concat(rl.I.filter(p => p.t > rl.T0).map((p, i) => ({
+        a: p.t - 5 * MIN, b: p.t, rate: p.rate, alpha: Math.max(0.25, rl.P[i + 1].v / 100),
+      })));
+    cA._spec = {
+      t0: rl.T0 - 30 * MIN, t1: rl.T0 + 120 * MIN, tickMin: 30, pastEnd: rl.T0,
+      series: [{ label: 'Chance', color: '--s1', kind: 'line', fill: true, pts: rl.P }],
+      strip, stripLabel: 'If it rains',
+    };
+  } else cA._spec = null;
+
+  if (rl || mo) {
+    const now = Date.now();
+    const series = [];
+    if (rl) series.push({ label: 'Radar', color: '--s1', kind: 'line', pts: rl.P.filter(p => p.t >= now - 10 * MIN) });
+    let strip = [];
+    if (mo?.hrrr) {
+      const h = mo.hrrr, pts = [];
+      h.times.forEach((t, i) => { if (h.valid[i]) pts.push({ t: t - 7.5 * MIN, v: h.nb[i] }); });
+      series.push({ label: 'HRRR ≤20 km', color: '--s2', kind: 'line', pts });
+      strip = h.times.map((t, i) => ({ a: t - 15 * MIN, b: t, rate: h.point[i] })).filter((c, i) => h.valid[i]);
+    }
+    if (mo?.nbm) {
+      series.push({ label: 'NBM', color: '--s3', kind: 'step', pts: mo.nbm.times.map((t, i) => ({ a: t - HOUR, b: t, v: mo.nbm.pop[i] })) });
+    }
+    cB._spec = { t0: now, t1: now + 12 * HOUR, tickMin: 120, series, strip, stripLabel: 'HRRR here' };
+  } else cB._spec = null;
+
+  for (const cv of [cA, cB]) {
+    if (cv._spec) drawChart(cv, null);
+    else { const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); }
+  }
+}
+
+// ─── summary + next refresh ─────────────────────────────────────────────────
+function modelPeak(fromT, toT) {
+  const mo = S.model;
+  let best = { v: 0, t: null }, first30 = null;
+  const consider = (t, v) => {
+    if (t < fromT || t > toT || v == null) return;
+    if (v > best.v) best = { v, t };
+    if (v >= 30 && (first30 == null || t < first30)) first30 = t;
+  };
+  if (mo?.hrrr) mo.hrrr.times.forEach((t, i) => mo.hrrr.valid[i] && consider(t - 7.5 * MIN, mo.hrrr.nb[i]));
+  if (mo?.nbm) mo.nbm.times.forEach((t, i) => consider(t - 30 * MIN, mo.nbm.pop[i]));
+  return { ...best, first30 };
+}
+
+function renderSummary() {
+  const rl = S.rl, now = Date.now();
+  const head = $('headline'), sub = $('subline');
+  const lines = [];
+  let h = 'Tap Refresh to pull radar and models';
+  if (rl) {
+    const fut = rl.P.filter(p => p.t >= now - 2.5 * MIN);
+    const maxP = Math.round(Math.max(0, ...fut.map(p => p.v)));
+    if (rl.rainingNow) {
+      h = 'Raining now';
+      const end = fut.find((p, i) => p.v < 30 && (fut[i + 1]?.v ?? 0) < 30);
+      lines.push(end ? `Likely easing around ${fmtTime(end.t)}` : `Likely continues past ${fmtTime(rl.P[rl.P.length - 1].t)}`);
+    } else {
+      const likely = fut.find(p => p.v >= 50), poss = fut.find(p => p.v >= 25);
+      if (likely) {
+        const m = Math.max(0, Math.round((likely.t - now) / MIN));
+        h = m <= 2 ? 'Rain likely any minute' : `Rain likely in ~${m} min`;
+        lines.push(`Around ${fmtTime(likely.t)} · peaks at ${maxP}%`);
+      } else if (poss) {
+        h = `Rain possible around ${fmtTime(poss.t)}`;
+        lines.push(`Radar tops out at ${maxP}% in the next 2 h`);
+      } else {
+        h = 'No rain on radar for the next 2 h';
+      }
+    }
+    const bits = [];
+    if (rl.nearest && !rl.rainingNow) bits.push(`Nearest rain ${Math.round(rl.nearest.km)} km ${rl.nearest.dir}`);
+    if (rl.motion && rl.motion.kmh > 3) bits.push(`moving ${rl.motion.toward} at ${Math.round(rl.motion.kmh)} km/h`);
+    if (bits.length) lines.push(bits.join(' · '));
+  }
+  if (S.model) {
+    const mo = S.model, end = now + 12 * HOUR, bits = [];
+    if (mo.nbm) {
+      let b = { v: -1, t: 0 };
+      mo.nbm.times.forEach((t, i) => { if (t - 30 * MIN >= now && t - 30 * MIN <= end && mo.nbm.pop[i] > b.v) b = { v: mo.nbm.pop[i], t: t - 30 * MIN }; });
+      if (b.v >= 0) bits.push(b.v >= 20 ? `NBM peaks at ${b.v}% around ${fmtTime(b.t)}` : `NBM dry (max ${b.v}%)`);
+    }
+    if (mo.hrrr) {
+      const wet = mo.hrrr.times.map((t, i) => ({ t: t - 7.5 * MIN, v: mo.hrrr.nb[i], ok: mo.hrrr.valid[i] }))
+        .filter(p => p.ok && p.t >= now && p.t <= end && p.v >= 50);
+      bits.push(wet.length ? `HRRR has rain nearby ${fmtTime(wet[0].t)}–${fmtTime(wet[wet.length - 1].t)}` : 'HRRR mostly dry nearby');
+    }
+    if (bits.length) lines.push('Models: ' + bits.join(' · '));
+    if (!rl) {
+      const pk = modelPeak(now, end);
+      h = pk.v >= 50 ? 'Models favor rain later' : pk.v >= 20 ? 'Some rain chance later' : 'Dry for the next 12 h';
+    }
+  }
+  head.textContent = h;
+  sub.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+}
+
+function nextRefresh() {
+  const now = Date.now(), rl = S.rl, mo = S.model;
+  if (!rl && !mo) return null;
+  const radarNext = rl ? rl.T0 + 5 * MIN + 90e3 : now + 5 * MIN;
+  let hrrrNext = null;
+  if (mo?.hrrrMeta) {
+    hrrrNext = mo.hrrrMeta.avail + mo.hrrrMeta.every;
+    if (hrrrNext < now) hrrrNext = now + 10 * MIN;
+  }
+  const fut = rl ? rl.P.filter(p => p.t >= now) : [];
+  const soon = fut.find(p => p.v >= 20);
+  const leadSoon = soon ? (soon.t - now) / MIN : null;
+  const pk = modelPeak(now, now + 12 * HOUR);
+  const pk3 = modelPeak(now, now + 3 * HOUR);
+
+  if (rl && (rl.rainingNow || (leadSoon != null && leadSoon <= 60))) {
+    return { t: Math.max(radarNext, now + MIN), what: 'next radar scan',
+      why: rl.rainingNow ? 'It\'s raining at your spot. Each 5-min scan updates when it ends.'
+        : 'Rain is close. Each new 5-min scan sharpens the arrival time.' };
+  }
+  if (leadSoon != null) {
+    return { t: Math.max(radarNext, now + 15 * MIN), what: 'radar',
+      why: `Rain is about ${Math.round(leadSoon)} min out. Its track firms up as it gets closer.` };
+  }
+  if (pk3.v >= 30) {
+    const t = Math.max(radarNext, Math.min(hrrrNext ?? Infinity, now + 20 * MIN));
+    return { t, what: 'radar', why: 'Models show rain possible within 3 h. New storms only show on radar once they form, so check radar again soon.' };
+  }
+  if (pk.v >= 20 && pk.first30 != null) {
+    const t = Math.max(radarNext, Math.min(hrrrNext ?? Infinity, pk.first30 - HOUR));
+    return { t, what: hrrrNext && Math.abs(t - hrrrNext) < MIN ? 'next HRRR run' : 'radar',
+      why: `Models' rain window starts around ${fmtTime(pk.first30)}. Refresh about an hour before that, or when the next HRRR run lands.` };
+  }
+  if (hrrrNext) {
+    return { t: hrrrNext, what: 'next HRRR run', why: 'Nothing on radar or in the models. Refreshing sooner won\'t change the answer.' };
+  }
+  return { t: now + 30 * MIN, what: 'radar', why: 'Nothing nearby.' };
+}
+
+function renderStamps() {
+  const now = Date.now();
+  if (S.rl) {
+    $('radarStamp').textContent = `scan ${fmtTime(S.rl.T0)} · ${fmtAgo(S.rl.T0)}`;
+  } else $('radarStamp').textContent = '';
+  const mo = S.model;
+  if (mo?.hrrrMeta) {
+    const z = new Date(mo.hrrrMeta.init).getUTCHours();
+    $('modelStamp').textContent = `HRRR ${String(z).padStart(2, '0')}Z run`;
+  } else $('modelStamp').textContent = '';
+
+  const nx = nextRefresh(), el = $('nextPull');
+  if (!nx) { el.hidden = true; return; }
+  el.hidden = false;
+  const due = nx.t <= now;
+  const pulled = S.pulledAt ? `Pulled ${fmtTime(S.pulledAt)} (${fmtAgo(S.pulledAt)})` : '';
+  el.innerHTML = `<div>${pulled}</div>`
+    + `<div>Next useful refresh: <b class="${due ? 'stale' : ''}">${due ? 'due now' : `${fmtTime(nx.t)} (${fmtIn(nx.t)})`}</b> · ${nx.what}</div>`
+    + `<div class="why">${nx.why}</div>`;
+}
+
+// ─── location + pull orchestration ──────────────────────────────────────────
+function renderPlace() {
+  const l = S.loc;
+  const acc = l.acc ? ` · ±${Math.round(l.acc)} m` : '';
+  $('place').textContent = `${l.name} · ${l.lat.toFixed(4)}, ${l.lon.toFixed(4)}${acc}`;
+}
+
+function setStatus(msg, err) {
+  const el = $('status');
+  el.textContent = msg || '';
+  el.classList.toggle('err', !!err);
+}
+
+function saveCache() {
+  try {
+    localStorage.setItem('rainchance.v1.' + S.loc.key, JSON.stringify({ loc: S.loc, pulledAt: S.pulledAt, rl: S.rl, model: S.model }));
+  } catch (e) { /* storage unavailable: fine */ }
+}
+function loadCache(key) {
+  try {
+    const raw = localStorage.getItem('rainchance.v1.' + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function resetView() {
+  S.rl = null; S.rh = null; S.model = null; S.pulledAt = null; S.tiles = null; S.extrap.clear();
+  stopPlay();
+  $('mapEmpty').hidden = false; $('mapTime').hidden = true;
+  $('btnPlay').disabled = true; $('lead').disabled = true;
+  $('motion').textContent = '';
+}
+
+function applyCache(c) {
+  if (!c) return false;
+  S.rl = c.rl; S.model = c.model; S.pulledAt = c.pulledAt;
+  $('mapEmpty').textContent = 'Showing your last pull. Tap Refresh to load the map.';
+  renderAll();
+  return true;
+}
+
+function renderAll() {
+  renderPlace();
+  renderSummary();
+  renderCharts();
+  renderStamps();
+  const mo = S.rl?.motion;
+  $('motion').textContent = S.rl
+    ? (mo ? `Storm motion measured from ${mo.n} echo blocks: toward ${mo.toward} at ${Math.round(mo.kmh)} km/h. Arrow ≈ 30 min of travel.`
+          : 'Not enough echo to measure motion, so rain is shown staying put.')
+    : '';
+}
+
+async function pull() {
+  if (S.busy) return;
+  S.busy = true;
+  stopPlay();
+  for (const b of ['btnRefresh', 'btnGps', 'btnHome']) $(b).disabled = true;
+  setStatus('Pulling…');
+  const loc = { ...S.loc };
+  const msgs = { radar: 'radar…', models: 'models…' };
+  const show = () => setStatus('Pulling ' + Object.values(msgs).join(' · '));
+  show();
+  const [rad, mod] = await Promise.allSettled([
+    pullRadar(loc, m => { msgs.radar = m; show(); }),
+    pullModels(loc).then(r => { msgs.models = 'models ✓'; show(); return r; }),
+  ]);
+  const errs = [];
+  if (rad.status === 'fulfilled') {
+    S.rl = rad.value.rl; S.rh = rad.value.rh; S.extrap.clear();
+    S.tiles = loadTiles(S.rh.box);
+    $('mapEmpty').hidden = true;
+    $('btnPlay').disabled = false; $('lead').disabled = false;
+    setLead(0);
+  } else {
+    errs.push('Radar failed: ' + rad.reason.message);
+    S.rl = null; S.rh = null;
+    $('mapEmpty').hidden = false; $('mapEmpty').textContent = 'Radar unavailable this pull';
+  }
+  if (mod.status === 'fulfilled') {
+    S.model = mod.value;
+    if (mod.value.errors.length) errs.push(...mod.value.errors);
+  } else {
+    errs.push('Models failed: ' + mod.reason.message);
+    S.model = null;
+  }
+  S.pulledAt = Date.now();
+  saveCache();
+  renderAll();
+  setStatus(errs.join(' · '), errs.length > 0);
+  S.busy = false;
+  for (const b of ['btnRefresh', 'btnGps', 'btnHome']) $(b).disabled = false;
+}
+
+function useGps() {
+  if (!('geolocation' in navigator)) { setStatus('This browser has no location access.', true); return; }
+  setStatus('Finding your location…');
+  $('btnGps').disabled = true;
+  navigator.geolocation.getCurrentPosition(pos => {
+    $('btnGps').disabled = false;
+    S.loc = { key: 'gps', name: 'My location', lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy };
+    resetView();
+    renderAll();
+    pull();
+  }, err => {
+    $('btnGps').disabled = false;
+    const why = err.code === 1 ? 'Location permission was denied. Opened as a local file? Try hosting it over https.'
+      : err.code === 2 ? 'Location unavailable.' : 'Location timed out.';
+    setStatus(why, true);
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+
+function goHome() {
+  S.loc = { ...HOME };
+  resetView();
+  renderAll();
+  pull();
+}
+
+// ─── boot ───────────────────────────────────────────────────────────────────
+hookChart($('chartA'), $('tipA'));
+hookChart($('chartB'), $('tipB'));
+$('rampA').innerHTML = rampHTML();
+$('rampB').innerHTML = rampHTML();
+$('btnRefresh').addEventListener('click', pull);
+$('btnGps').addEventListener('click', useGps);
+$('btnHome').addEventListener('click', goHome);
+$('btnPlay').addEventListener('click', togglePlay);
+$('lead').addEventListener('input', e => { stopPlay(); setLead(+e.target.value); });
+window.addEventListener('resize', () => { renderCharts(); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (S.rh) S.tiles = loadTiles(S.rh.box);
+  renderCharts(); scheduleMap();
+});
+setInterval(() => { renderStamps(); renderSummary(); renderCharts(); }, 30000);
+
+renderPlace();
+if (!applyCache(loadCache('home'))) renderAll();
+</script>
+</body>
+</html>
