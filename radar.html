@@ -767,6 +767,19 @@ function renderMap() {
   g.lineWidth = 4;
   g.beginPath(); g.arc(C, C, 11, 0, 2 * Math.PI); g.fill(); g.stroke();
 
+  // name the pin, on the side away from the motion arrow, so nearby town labels don't claim it
+  const label = S.loc.key === 'gps' ? 'You' : (S.loc.short || 'Here');
+  const left = (S.rh.F.ug || 0) > 0;
+  g.font = '700 24px system-ui, sans-serif';
+  g.textBaseline = 'middle';
+  g.textAlign = left ? 'right' : 'left';
+  const lx = C + (left ? -20 : 20);
+  g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.85)'; g.lineJoin = 'round';
+  g.strokeText(label, lx, C);
+  g.fillStyle = '#ffffff';
+  g.fillText(label, lx, C);
+  g.textBaseline = 'alphabetic';
+
   const mt = $('mapTime');
   mt.hidden = false;
   mt.textContent = `${fmtTime(im.t)} · ${im.obs ? 'observed' : 'projected'}`;
