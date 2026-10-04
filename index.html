@@ -839,7 +839,7 @@ async function refresh() {
     renderBand(); renderSched(); renderCharts();
   });
 }
-$('radarLink').href = `radar.html?lat=${VENUE.lat}&lon=${VENUE.lon}&name=${encodeURIComponent(VENUE.name + ', Prosper')}&short=Stadium`;
+$('radarLink').href = `radar.html?lat=${VENUE.lat}&lon=${VENUE.lon}&name=${encodeURIComponent("BOA Prosper · Children's Health Stadium")}&short=BOA`;
 for (const id of ['cTemp', 'cWind', 'cCloud', 'cRain', 'cAQ']) hookChart($(id));
 $('btnRefresh').addEventListener('click', refresh);
 window.addEventListener('resize', renderCharts);

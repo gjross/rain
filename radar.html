@@ -159,14 +159,14 @@ footer { color: var(--muted); font-size: 11px; text-align: center; margin-top: 8
 <body>
 <main>
   <header>
-    <h1>Rain chance</h1>
+    <h1>Rain chance <a href="./" style="font-size:13px;font-weight:500;margin-left:6px;color:var(--primary)">← BOA forecast</a></h1>
     <div id="place" class="place"></div>
   </header>
 
   <div class="actions">
     <button id="btnRefresh" class="primary">↻ Refresh</button>
     <button id="btnGps">📍 My location</button>
-    <button id="btnHome">⌂ Stadium</button>
+    <button id="btnHome">⌂ BOA</button>
   </div>
   <div id="status" class="status"></div>
 
@@ -236,7 +236,7 @@ footer { color: var(--muted); font-size: 11px; text-align: center; margin-top: 8
 'use strict';
 
 // ─── constants ──────────────────────────────────────────────────────────────
-const HOME = { key: 'boa-prosper', name: "Children's Health Stadium, Prosper", lat: 33.26076, lon: -96.80426, short: 'Stadium' };
+const HOME = { key: 'boa-prosper', name: "BOA Prosper · Children's Health Stadium", lat: 33.26076, lon: -96.80426, short: 'BOA' };
 // A link can start the page somewhere else: radar.html?lat=..&lon=..&name=..&short=..
 {
   const q = new URLSearchParams(location.search), lat = parseFloat(q.get('lat')), lon = parseFloat(q.get('lon'));
