@@ -1206,6 +1206,7 @@ function renderAll() {
 
 async function pull() {
   if (S.busy) return;
+  if (await ensureFresh({ loc: S.loc })) return;
   S.busy = true;
   stopPlay();
   for (const b of ['btnRefresh', 'btnGps', 'btnHome']) $(b).disabled = true;
@@ -1270,6 +1271,36 @@ function goHome() {
   pull();
 }
 
+// ─── always the newest deploy ───────────────────────────────────────────────
+// GitHub Pages lets phones reuse a page for 10 minutes, and Android resumes tabs
+// and home-screen icons without reloading. So the page asks the server itself.
+async function newerDeploy() {
+  try {
+    const r = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });
+    const lm = Date.parse(r.headers.get('last-modified') || ''), mine = Date.parse(document.lastModified);
+    return isFinite(lm) && isFinite(mine) && lm > mine + 1000 ? lm : null;
+  } catch (e) { return null; }
+}
+async function ensureFresh(pending) {
+  const lm = await newerDeploy();
+  if (!lm) return false;
+  try {
+    if (sessionStorage.getItem('reloadedFor') === String(lm)) return false;   // never loop
+    sessionStorage.setItem('reloadedFor', String(lm));
+    if (pending) sessionStorage.setItem('pendingPull', JSON.stringify(pending));
+  } catch (e) { return false; }
+  location.reload();
+  return true;
+}
+function takePending() {
+  try {
+    const p = sessionStorage.getItem('pendingPull');
+    sessionStorage.removeItem('pendingPull');
+    return p ? JSON.parse(p) : null;
+  } catch (e) { return null; }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !S.busy) ensureFresh(null); });
+
 // ─── boot ───────────────────────────────────────────────────────────────────
 hookChart($('chartA'), $('tipA'));
 hookChart($('chartB'), $('tipB'));
@@ -1289,7 +1320,15 @@ setInterval(() => { renderStamps(); renderSummary(); renderCharts(); }, 30000);
 
 renderPlace();
 $('btnHome').textContent = '⌂ ' + HOME.short;
-if (!applyCache(loadCache(HOME.key))) renderAll();
+const pending = takePending();
+if (pending?.loc) {
+  S.loc = pending.loc;
+  renderAll();
+  pull();
+} else {
+  if (!applyCache(loadCache(HOME.key))) renderAll();
+  ensureFresh(null);
+}
 </script>
 </body>
 </html>

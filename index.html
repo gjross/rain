@@ -811,6 +811,7 @@ function setStatus(msg, err) { const el = $('status'); el.textContent = msg || '
 
 async function refresh() {
   if (S.busy) return;
+  if (await ensureFresh({ pull: true })) return;
   S.busy = true;
   $('btnRefresh').disabled = true;
   setStatus('Pulling models, ensembles and air quality…');
@@ -826,6 +827,36 @@ async function refresh() {
   S.busy = false;
   $('btnRefresh').disabled = false;
 }
+
+// ─── always the newest deploy ───────────────────────────────────────────────
+// GitHub Pages lets phones reuse a page for 10 minutes, and Android resumes tabs
+// and home-screen icons without reloading. So the page asks the server itself.
+async function newerDeploy() {
+  try {
+    const r = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });
+    const lm = Date.parse(r.headers.get('last-modified') || ''), mine = Date.parse(document.lastModified);
+    return isFinite(lm) && isFinite(mine) && lm > mine + 1000 ? lm : null;
+  } catch (e) { return null; }
+}
+async function ensureFresh(pending) {
+  const lm = await newerDeploy();
+  if (!lm) return false;
+  try {
+    if (sessionStorage.getItem('reloadedFor') === String(lm)) return false;   // never loop
+    sessionStorage.setItem('reloadedFor', String(lm));
+    if (pending) sessionStorage.setItem('pendingPull', JSON.stringify(pending));
+  } catch (e) { return false; }
+  location.reload();
+  return true;
+}
+function takePending() {
+  try {
+    const p = sessionStorage.getItem('pendingPull');
+    sessionStorage.removeItem('pendingPull');
+    return p ? JSON.parse(p) : null;
+  } catch (e) { return null; }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !S.busy) ensureFresh(null); });
 
 // ─── boot ───────────────────────────────────────────────────────────────────
 {
@@ -849,6 +880,7 @@ try {
   if (c) { S.fc = c.fc; S.pulledAt = c.pulledAt; }
 } catch (e) { /* fine */ }
 renderAll();
+if (takePending()) refresh(); else ensureFresh(null);
 </script>
 </body>
 </html>
