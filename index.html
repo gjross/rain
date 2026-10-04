@@ -4,69 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#121211">
-<title>Rain Chance</title>
+<title>BOA Prosper Weather</title>
 <style>
 :root {
   color-scheme: light;
-  --bg: #f3f3f1;
-  --surface: #fcfcfb;
-  --text: #0b0b0b;
-  --text-2: #52514e;
-  --muted: #85847f;
-  --grid: #e4e3df;
-  --past: rgba(0,0,0,.035);
-  --border: #e4e3df;
-  --btn: #ecebe7;
-  --btn-text: #0b0b0b;
-  --primary: #2a78d6;
-  --primary-text: #ffffff;
-  --s1: #2a78d6;   /* radar */
-  --s2: #eb6834;   /* HRRR */
-  --s3: #1baf7a;   /* NBM */
-  --r1: #b7d3f6;   /* light rain */
-  --r2: #5598e7;   /* moderate */
-  --r3: #1c5cab;   /* heavy */
-  --r4: #0d366b;   /* violent */
-  --map-bg: #e9e9e6;
-  --ring: rgba(0,0,0,.35);
-  --pin: #e34948;
+  --bg: #f3f3f1; --surface: #fcfcfb; --text: #0b0b0b; --text-2: #52514e; --muted: #85847f;
+  --grid: #e4e3df; --border: #e4e3df; --btn: #ecebe7; --btn-text: #0b0b0b;
+  --primary: #2a78d6; --primary-text: #ffffff;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --band: rgba(42,120,214,.18); --zone: rgba(0,0,0,.035); --night: rgba(0,0,0,.06); --mark: #52514e;
   --warn: #b26a00;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #121211;
-    --surface: #1a1a19;
-    --text: #ffffff;
-    --text-2: #c3c2b7;
-    --muted: #8f8e86;
-    --grid: #2e2e2b;
-    --past: rgba(255,255,255,.035);
-    --border: #2e2e2b;
-    --btn: #2a2a28;
-    --btn-text: #ffffff;
-    --primary: #3987e5;
-    --primary-text: #ffffff;
-    --s1: #3987e5;
-    --s2: #d95926;
-    --s3: #199e70;
-    --r1: #184f95;
-    --r2: #2a78d6;
-    --r3: #6da7ec;
-    --r4: #cde2fb;
-    --map-bg: #0e0e0e;
-    --ring: rgba(255,255,255,.4);
-    --pin: #ff6b6b;
+    --bg: #121211; --surface: #1a1a19; --text: #ffffff; --text-2: #c3c2b7; --muted: #8f8e86;
+    --grid: #2e2e2b; --border: #2e2e2b; --btn: #2a2a28; --btn-text: #ffffff;
+    --primary: #3987e5; --primary-text: #ffffff;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --band: rgba(57,135,229,.22); --zone: rgba(255,255,255,.035); --night: rgba(0,0,0,.35); --mark: #c3c2b7;
     --warn: #fab219;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #121211; --surface: #1a1a19; --text: #ffffff; --text-2: #c3c2b7; --muted: #8f8e86;
-  --grid: #2e2e2b; --past: rgba(255,255,255,.035); --border: #2e2e2b; --btn: #2a2a28; --btn-text: #ffffff;
-  --primary: #3987e5; --primary-text: #ffffff; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
-  --r1: #184f95; --r2: #2a78d6; --r3: #6da7ec; --r4: #cde2fb; --map-bg: #0e0e0e;
-  --ring: rgba(255,255,255,.4); --pin: #ff6b6b; --warn: #fab219;
+  --grid: #2e2e2b; --border: #2e2e2b; --btn: #2a2a28; --btn-text: #ffffff;
+  --primary: #3987e5; --primary-text: #ffffff;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --band: rgba(57,135,229,.22); --zone: rgba(255,255,255,.035); --night: rgba(0,0,0,.35); --mark: #c3c2b7;
+  --warn: #fab219;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -78,80 +45,77 @@ body {
 }
 main { max-width: 640px; margin: 0 auto; }
 h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
-h2 { font-size: 14px; margin: 0; font-weight: 600; color: var(--text); }
+h2 { font-size: 14px; margin: 0; font-weight: 600; }
+a { color: var(--primary); }
 .place { color: var(--text-2); font-size: 13px; margin-top: 2px; }
 .actions { display: flex; gap: 8px; margin: 12px 0 6px; }
-button {
+button, select {
   font: inherit; font-size: 14px; border: 0; border-radius: 10px; padding: 10px 12px;
-  background: var(--btn); color: var(--btn-text); cursor: pointer; white-space: nowrap;
+  background: var(--btn); color: var(--btn-text); cursor: pointer;
 }
 button.primary { background: var(--primary); color: var(--primary-text); font-weight: 600; flex: 1; }
 button:disabled { opacity: .5; cursor: default; }
+a.btn {
+  display: inline-flex; align-items: center; text-decoration: none; border-radius: 10px; padding: 10px 12px;
+  background: var(--btn); color: var(--btn-text); font-size: 14px; white-space: nowrap;
+}
 .status { min-height: 18px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 .status.err { color: var(--warn); }
-.card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-  padding: 14px; margin-bottom: 12px;
-}
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
 .card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
-.headline { font-size: 24px; font-weight: 650; letter-spacing: -.015em; line-height: 1.2; }
-.subline { color: var(--text-2); margin-top: 6px; font-size: 14px; }
-.subline div + div { margin-top: 2px; }
-.next {
-  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
-  font-size: 13px; color: var(--text-2);
-}
+.headline { font-size: 23px; font-weight: 650; letter-spacing: -.015em; line-height: 1.2; }
+.subline { color: var(--text-2); margin-top: 8px; font-size: 14px; }
+.subline div + div { margin-top: 3px; }
+.subline b { color: var(--text); font-weight: 600; }
+.conf { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.next { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
 .next b { color: var(--text); }
 .next .why { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.next ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; color: var(--muted); }
 .stale { color: var(--warn); }
-.mapwrap { position: relative; width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--map-bg); }
-.mapwrap canvas { width: 100%; height: 100%; display: block; }
-.mapempty {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  color: var(--muted); font-size: 13px; text-align: center; padding: 20px;
-}
-.maptime {
-  position: absolute; left: 8px; top: 8px; padding: 3px 8px; border-radius: 6px;
-  background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-variant-numeric: tabular-nums;
-}
-.slider { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-.slider input { flex: 1; accent-color: var(--primary); }
-.slider button { padding: 6px 12px; }
-#leadLbl { font-size: 12px; color: var(--text-2); min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
-#motion { margin-top: 8px; }
+.pick { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.pick select { flex: 1; min-width: 0; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 14px; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.stat .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.stat .r { font-size: 12px; color: var(--text-2); }
+.flag { margin-top: 10px; font-size: 13px; color: var(--warn); }
+.sched { display: flex; gap: 2px; height: 26px; border-radius: 8px; overflow: hidden; font-size: 11px; }
+.sched div { display: flex; align-items: center; justify-content: center; color: var(--text-2); background: var(--zone); white-space: nowrap; overflow: hidden; }
+.sched .on { background: var(--btn); color: var(--text); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
-.sw.box { height: 10px; width: 10px; border-radius: 2px; }
+.sw.dash { background: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px) !important; height: 2px; }
+.sw.box { height: 10px; width: 14px; border-radius: 2px; }
 .chartwrap { position: relative; touch-action: pan-y; }
 .chartwrap canvas { width: 100%; display: block; }
 .tip {
   position: absolute; top: 0; pointer-events: none; display: none; z-index: 2;
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   padding: 6px 8px; font-size: 12px; line-height: 1.45; color: var(--text);
-  box-shadow: 0 4px 14px rgba(0,0,0,.18); white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25); white-space: nowrap;
 }
 .tip .t { color: var(--text-2); margin-bottom: 2px; }
 .tip .row { display: flex; align-items: center; gap: 6px; }
-.ramp { display: flex; gap: 10px; font-size: 11px; color: var(--muted); margin-top: 4px; flex-wrap: wrap; }
-.ramp span { display: inline-flex; align-items: center; gap: 4px; }
+.note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.aqpending { padding: 18px 8px; text-align: center; color: var(--text-2); font-size: 13px; }
 details summary { cursor: pointer; font-weight: 600; font-size: 14px; }
-details p, details li { color: var(--text-2); font-size: 13px; }
+details li { color: var(--text-2); font-size: 13px; }
 details ul { padding-left: 18px; }
 footer { color: var(--muted); font-size: 11px; text-align: center; margin-top: 8px; }
-@media (max-width: 360px) {           /* Fold cover screen */
+@media (max-width: 360px) {
   body { padding-left: 10px; padding-right: 10px; }
   .actions { gap: 6px; }
-  button { padding: 10px 9px; font-size: 13px; }
+  button, a.btn { padding: 10px 9px; font-size: 13px; }
   .card { padding: 12px; }
-  .headline { font-size: 22px; }
+  .headline { font-size: 21px; }
 }
-@media (min-width: 720px) {           /* Fold inner screen, tablets */
+@media (min-width: 720px) {
   main { max-width: 1100px; }
   .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
-  .cols .card { margin-bottom: 12px; }
   .actions { max-width: 520px; }
 }
 </style>
@@ -159,1115 +123,732 @@ footer { color: var(--muted); font-size: 11px; text-align: center; margin-top: 8
 <body>
 <main>
   <header>
-    <h1>Rain chance</h1>
-    <div id="place" class="place"></div>
+    <h1>BOA North Texas Regional · Sat Oct 10</h1>
+    <div class="place">Children's Health Stadium, 1240 Inner Loop Dr, Prosper</div>
   </header>
 
   <div class="actions">
     <button id="btnRefresh" class="primary">↻ Refresh</button>
-    <button id="btnGps">📍 My location</button>
-    <button id="btnHome">⌂ Hardin</button>
+    <a class="btn" id="radarLink" href="radar.html">🌧 Live radar</a>
   </div>
   <div id="status" class="status"></div>
 
   <div class="cols">
   <div class="col">
-  <section class="card">
-    <div id="headline" class="headline">Tap Refresh to pull radar and models</div>
-    <div id="subline" class="subline"></div>
-    <div id="nextPull" class="next" hidden></div>
-  </section>
+    <section class="card">
+      <div id="headline" class="headline">Tap Refresh to pull Saturday's forecast</div>
+      <div id="subline" class="subline"></div>
+      <div id="conf" class="conf"></div>
+      <div id="nextPull" class="next" hidden></div>
+    </section>
 
-  <section class="card">
-    <div class="card-h"><h2>Radar</h2><span id="radarStamp" class="muted small"></span></div>
-    <div class="mapwrap">
-      <canvas id="map" width="720" height="720"></canvas>
-      <div id="mapTime" class="maptime" hidden></div>
-      <div id="mapEmpty" class="mapempty">The map loads with each refresh</div>
-    </div>
-    <div class="slider">
-      <button id="btnPlay" disabled aria-label="Play">▶</button>
-      <input type="range" id="lead" min="-30" max="120" step="5" value="0" disabled aria-label="Radar time">
-      <span id="leadLbl"></span>
-    </div>
-    <div id="motion" class="muted small"></div>
-  </section>
+    <section class="card">
+      <div class="card-h"><h2>At your band's time</h2></div>
+      <div class="pick"><select id="band" aria-label="Band"></select></div>
+      <div id="bandStats" class="stats"><div class="muted small">Refresh to see the numbers.</div></div>
+      <div id="bandFlag" class="flag" hidden></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>The day</h2><span class="muted small">Central time</span></div>
+      <div id="sched" class="sched"></div>
+      <div class="note" id="schedNote"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>Air quality</h2><span id="aqStamp" class="muted small"></span></div>
+      <div id="aqWrap">
+        <div class="chartwrap"><canvas id="cAQ"></canvas><div class="tip"></div></div>
+      </div>
+      <div id="aqPending" class="aqpending" hidden></div>
+    </section>
   </div>
+
   <div class="col">
+    <section class="card">
+      <div class="card-h"><h2>Temperature</h2><span class="muted small">°F</span></div>
+      <div class="legend">
+        <span><i class="sw box" style="background:var(--band)"></i>82-run range (10–90%)</span>
+        <span><i class="sw" style="background:var(--s1)"></i>NBM best guess</span>
+        <span style="color:var(--s2)"><i class="sw dash"></i><span style="color:var(--text-2)">Feels like</span></span>
+        <span class="hrrrLeg" hidden><i class="sw" style="background:var(--s3)"></i>HRRR</span>
+      </div>
+      <div class="chartwrap"><canvas id="cTemp"></canvas><div class="tip"></div></div>
+    </section>
 
-  <section class="card">
-    <div class="card-h"><h2>Next 2 hours · radar</h2><span class="muted small">5-min steps</span></div>
-    <div class="legend">
-      <span><i class="sw" style="background:var(--s1)"></i>Chance of rain at this spot</span>
-    </div>
-    <div class="chartwrap"><canvas id="chartA"></canvas><div id="tipA" class="tip"></div></div>
-    <div class="ramp" id="rampA"></div>
-  </section>
+    <section class="card">
+      <div class="card-h"><h2>Wind</h2><span class="muted small">mph · arrows show where it blows</span></div>
+      <div class="legend">
+        <span><i class="sw box" style="background:var(--band)"></i>82-run range</span>
+        <span><i class="sw" style="background:var(--s1)"></i>NBM sustained</span>
+        <span style="color:var(--s2)"><i class="sw dash"></i><span style="color:var(--text-2)">NBM gusts</span></span>
+        <span class="hrrrLeg" hidden><i class="sw" style="background:var(--s3)"></i>HRRR</span>
+      </div>
+      <div class="chartwrap"><canvas id="cWind"></canvas><div class="tip"></div></div>
+    </section>
 
-  <section class="card">
-    <div class="card-h"><h2>Next 12 hours · models</h2><span id="modelStamp" class="muted small"></span></div>
-    <div class="legend">
-      <span><i class="sw" style="background:var(--s1)"></i>Radar (first 2 h)</span>
-      <span><i class="sw" style="background:var(--s2)"></i>HRRR · rain within 20 km</span>
-      <span><i class="sw" style="background:var(--s3)"></i>NBM hourly chance</span>
-    </div>
-    <div class="chartwrap"><canvas id="chartB"></canvas><div id="tipB" class="tip"></div></div>
-    <div class="ramp" id="rampB"></div>
-  </section>
+    <section class="card">
+      <div class="card-h"><h2>Cloud cover</h2><span class="muted small">%</span></div>
+      <div class="legend">
+        <span><i class="sw box" style="background:var(--band)"></i>82-run range</span>
+        <span><i class="sw" style="background:var(--s1)"></i>NBM best guess</span>
+        <span class="hrrrLeg" hidden><i class="sw" style="background:var(--s3)"></i>HRRR</span>
+      </div>
+      <div class="chartwrap"><canvas id="cCloud"></canvas><div class="tip"></div></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>Rain chance</h2><span class="muted small">share of 82 runs with rain that hour</span></div>
+      <div class="chartwrap"><canvas id="cRain"></canvas><div class="tip"></div></div>
+    </section>
   </div>
   </div>
 
   <details class="card">
     <summary>How this works</summary>
     <ul>
-      <li><b>Radar (0–2 h).</b> The last 30 minutes of NEXRAD 5-minute mosaics around you, 400 km across. Storm motion is measured by matching echoes between scans 15 minutes apart, then the current rain field is pushed forward along that motion. 60 slightly-perturbed runs (speed, direction, position) give the chance: the share of runs with rain (≥18 dBZ, about 0.5 mm/h) over your spot. It cannot create new storms. Pop-up cells that haven't formed yet won't show here.</li>
-      <li><b>HRRR (0–12 h).</b> NOAA's 3 km storm-resolving model at 15-minute steps, sampled at 17 points out to 20 km. The orange line is the share of those points with rain within ±15 min. That's a neighborhood chance, because a storm forecast 8 km off is still a useful forecast. The intensity strip is HRRR right at your spot.</li>
-      <li><b>NBM.</b> The National Blend of Models' calibrated hourly chance of rain, close to what the NWS forecast says.</li>
-      <li><b>Pulls.</b> Nothing loads until you tap a button. "Next useful refresh" is when new data that could change the answer is due: the next radar scan when rain is close, otherwise the next HRRR run.</li>
+      <li><b>The shaded range</b> is the middle 80% of 82 forecast runs: the ECMWF (51) and GFS (31) ensembles. A wide band means the models genuinely don't know yet. It narrows as Saturday gets closer.</li>
+      <li><b>NBM</b> is the National Blend of Models, NOAA's bias-corrected mix of many models. It's the closest thing to an official forecast, so it's the headline number.</li>
+      <li><b>HRRR</b> is NOAA's 3 km storm-scale model. Its long runs reach 48 hours, so it joins Thursday afternoon and covers the whole day by Friday morning.</li>
+      <li><b>Air quality</b> is the CAMS 5-day forecast (US AQI). It first reaches Saturday early in the week.</li>
+      <li><b>Pulls</b> only happen when you tap Refresh. "Next useful refresh" is when a model run that could change the answer lands.</li>
+      <li>Finals and awards times are estimates from BOA's usual regional format. The prelims schedule is BOA's published one.</li>
     </ul>
   </details>
 
   <footer>
-    Radar: NOAA NEXRAD via Iowa Environmental Mesonet · Models: NOAA HRRR &amp; NBM via Open-Meteo (CC BY 4.0) · Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors
+    Forecasts: NOAA NBM, HRRR, GEFS · ECMWF · CAMS air quality, all via Open-Meteo (CC BY 4.0) · Schedule: Bands of America<br>
+    <a href="radar.html">Rain-chance app (Hardin)</a>
   </footer>
 </main>
 
 <script>
 'use strict';
 
-// ─── constants ──────────────────────────────────────────────────────────────
-const HOME = { key: 'home', name: '4201 S Hardin Blvd, McKinney', lat: 33.15666, lon: -96.66064 };
+// ─── event ──────────────────────────────────────────────────────────────────
+const VENUE = { name: "Children's Health Stadium", lat: 33.26076, lon: -96.80426 };
+const DATE = '2026-10-10';
+const TZ = 'America/Chicago';
+const CDT = (h, m = 0, day = 10) => Date.UTC(2026, 9, day, h + 5, m);     // Oct 10 is CDT (UTC−5)
+const T0 = CDT(6), T1 = CDT(23, 30);                                       // chart window
 
-// IEM N0Q composite palette: index i → dBZ = i*0.5 − 32 (index 0 = no data).
-const PAL_HEX = '00000085718f85728f86738d87758b87768b887789897987897a878a7b858b7d848b7e848c7f828d81808d82808e837e8f847c8f857c90877b918879918979928b77938d759691539894579b975b9d9a60a09d64a3a068a5a36da8a671aaa976adac7ab0af7eb2b283b7b88cbabb90bdbe94bfc199c2c49dc4c7a2c7caa6cacdaaccd0afd2d4b4cfd2b4c9ccb4c6c9b4c3c7b4c0c4b4bdc1b4b9beb4b6bbb4b3b9b4b0b6b4adb3b4aab0b4a4abb4a0a8b49da5b49aa2b497a0b4949db4919ab4949bb59098b48c95b38892b2808cb07c89af7886ae7483ac7080ab6c7daa6779a96376a85f73a75b70a6576da44f67a24b64a14761a0435e9f415b9e4361a24568a6486faa4a76ae4d7db24f84b6518bbb5699c3599fc75ba6cb5eadcf60b4d462bbd865c2dc67c9e06ad0e46fd6e868d6d759d6b352d6a24bd69043d67e3cd66d35d65b11d51811d11710cd1710c81610c4160fbc150fb7140eb3140eaf130eab130da6120da2120d9e110c99110c95100c91100b880f0b840e0a800e0a7c0d0a770d09730c096f0c096b0b08660b08620a095e09327308467d085b88076f9207849d0698a806adb205c1bd05d6c704ead204ffe200ffd800ffd300ffce00ffc900ffc400ffc000ffbb00ffb600ffb100ffac00ffa700ffa200ff9900ff9400ff8f00ff8a00ff8500ff8000ff0000f80000f10000ea0000e30000d50000cd0000c60000bf0000b80000b10000aa0000a300009b00009400008d00007f0000780000710000fffffffff5ffffeaffffdfffffd4ffffc9ffffbeffffb3ffff9dffff92ffff75fffc6bfdf960faf656f7f34bf4f040f1ed36efea2bece720e9e10be3b200ffac00fca400f79b00f49300ef8800ea8300e87900e27200dd6900db05ecf005ebf005eaf005dde005dce005dbe005cdd005ccd004bdc004bcc004bbc004aeb004adb0049ea0049da0049ca0038e90038d90038c90037e80037d80036f70036e70036d70025f60025e60024f50024e50024d50023f40023e40023d40013030012f30012020011f20011e203a67b53a66b53a65b53a64b53a63b53a62b5';
+const SCHEDULE = [
+  [7, 45, 'Lake Dallas'], [8, 0, 'Melissa'], [8, 15, 'Whitesboro'], [8, 30, 'Rock Hill'], [8, 45, 'Emerson'],
+  [9, 0, 'Lebanon Trail'], [9, 30, 'Bentonville (AR)'], [9, 45, 'Wylie'], [10, 0, 'Aledo'], [10, 15, 'Flower Mound'],
+  [10, 30, 'Liberty'], [10, 45, 'Yukon (OK)'], [11, 0, 'Argyle'], [11, 15, 'Sachse'], [12, 15, 'Hebron'],
+  [12, 30, 'Reedy'], [12, 45, 'Lone Star'], [13, 0, 'Muskogee (OK)'], [13, 15, 'Walnut Grove'], [13, 30, 'McKinney'],
+  [13, 45, 'Rockwall'], [14, 15, 'Wakeland'], [14, 30, 'Braswell'], [14, 45, 'Prosper'], [15, 0, 'Commerce'],
+  [15, 15, 'Little Elm'], [15, 45, 'Rockwall-Heath'], [16, 0, 'Marcus'],
+].map(([h, m, name]) => ({ t: CDT(h, m), name }));
 
-const N = 360;              // radar grid, pixels per side
-const HALF_KM = 200;        // half-width of the radar box (ground km)
-const KM_PX = 2 * HALF_KM / N;
-const THR_DBZ = 18;         // "rain" ≈ 0.5 mm/h
-const MEMBERS = 60;
-const R_E = 6378137, D2R = Math.PI / 180;
+const BLOCKS = [
+  { label: 'Prelims', a: CDT(7, 45), b: CDT(16, 15) },
+  { label: 'Awards', a: CDT(16, 30), b: CDT(17, 0), est: true },
+  { label: 'Dinner', a: CDT(17, 0), b: CDT(19, 30) },
+  { label: 'Finals', a: CDT(19, 30), b: CDT(22, 30), est: true },
+  { label: 'Awards', a: CDT(22, 30), b: CDT(23, 0), est: true },
+];
+const PRELIMS = BLOCKS[0], FINALS = BLOCKS[3];
+const ZONES = [PRELIMS, FINALS];
 
-const PAL = [];
-for (let i = 0; i < 256; i++) PAL.push(parseInt(PAL_HEX.substr(i * 6, 6), 16));
-const RGB2IDX = new Map(PAL.map((c, i) => [c, i]));
-const DBZ = new Float32Array(256), RATE = new Float32Array(256), FEAT = new Float32Array(256);
-const zr = dbz => Math.pow(Math.pow(10, Math.min(dbz, 53) / 10) / 200, 1 / 1.6);   // Marshall–Palmer, hail-capped
-for (let i = 1; i < 256; i++) {
-  const d = i * 0.5 - 32;
-  DBZ[i] = d;
-  RATE[i] = d < 10 ? 0 : zr(d);
-  FEAT[i] = d < 10 ? 0 : Math.min(d, 55) - 10;
-}
-DBZ[0] = -99;
-const THR_RATE = zr(THR_DBZ);
-
-// ─── state ──────────────────────────────────────────────────────────────────
-const S = {
-  loc: { ...HOME },
-  rl: null,        // radar results (light, cacheable)
-  rh: null,        // radar heavy: frames + motion field (this session only)
-  model: null,
-  pulledAt: null,
-  busy: false,
-  extrap: new Map(),
-  tiles: null,
-  lead: 0,
-  playTimer: null,
-};
-
-const $ = id => document.getElementById(id);
-const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const MIN = 60e3, HOUR = 3600e3;
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+const S = { fc: null, pulledAt: null, busy: false, band: 'Lebanon Trail' };
+try { S.band = localStorage.getItem('boa.band') || S.band; } catch (e) { /* fine */ }
 
 // ─── formatting ─────────────────────────────────────────────────────────────
-const fmtTime = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+const fmtTime = t => new Date(t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ });
+const fmtDayTime = t => new Date(t).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: TZ });
+function fmtWhen(t) {
+  const sameDay = new Date(t).toLocaleDateString('en-US', { timeZone: TZ }) === new Date().toLocaleDateString('en-US', { timeZone: TZ });
+  return sameDay ? fmtTime(t) : fmtDayTime(t);
+}
 function fmtTick(t) {
-  const d = new Date(t);
-  const h = d.getHours() % 12 || 12, ap = d.getHours() < 12 ? 'a' : 'p';
-  return d.getMinutes() === 0 ? `${h}${ap}` : `${h}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const h = new Date(t - 5 * HOUR).getUTCHours();
+  return `${h % 12 || 12}${h < 12 ? 'a' : 'p'}`;
 }
 function fmtAgo(t) {
   const m = Math.round((Date.now() - t) / MIN);
   if (m < 1) return 'just now';
   if (m < 60) return `${m} min ago`;
-  const h = Math.floor(m / 60);
-  return `${h} h ${m % 60} min ago`;
+  if (m < 48 * 60) return `${Math.floor(m / 60)} h ${m % 60} min ago`;
+  return `${Math.round(m / 1440)} days ago`;
 }
 function fmtIn(t) {
   const m = Math.round((t - Date.now()) / MIN);
   if (m <= 0) return 'now';
   if (m < 60) return `in ${m} min`;
-  return `in ${Math.floor(m / 60)} h ${m % 60} min`;
+  if (m < 48 * 60) return `in ${Math.floor(m / 60)} h ${m % 60} min`;
+  return `in ${Math.round(m / 1440)} days`;
 }
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
-function category(rate) {
-  if (rate < THR_RATE) return null;
-  if (rate < 2.5) return { name: 'light', v: '--r1' };
-  if (rate < 10) return { name: 'moderate', v: '--r2' };
-  if (rate < 50) return { name: 'heavy', v: '--r3' };
-  return { name: 'violent', v: '--r4' };
-}
-const fmtRate = r => r < 0.05 ? '0' : r < 10 ? r.toFixed(1) : Math.round(r).toString();
+const compass = d => COMPASS[Math.round(((d % 360) + 360) % 360 / 22.5) % 16];
+const r0 = v => v == null ? '–' : Math.round(v).toString();
 
 // ─── networking ─────────────────────────────────────────────────────────────
-async function fetchT(url, ms = 25000) {
-  const ac = new AbortController();
-  const id = setTimeout(() => ac.abort(), ms);
-  try { return await fetch(url, { signal: ac.signal, cache: 'no-store' }); }
-  finally { clearTimeout(id); }
-}
-async function getJSON(url) {
-  const r = await fetchT(url);
-  if (!r.ok) throw new Error(`${r.status} from ${new URL(url).host}`);
-  return r.json();
+async function getJSON(url, ms = 25000) {
+  const ac = new AbortController(), id = setTimeout(() => ac.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: ac.signal, cache: 'no-store' });
+    if (!r.ok) throw new Error(`${r.status} from ${new URL(url).host}`);
+    return await r.json();
+  } finally { clearTimeout(id); }
 }
 
-// ─── radar: frames ──────────────────────────────────────────────────────────
-function mercBox(loc) {
-  const mx = R_E * loc.lon * D2R;
-  const my = R_E * Math.log(Math.tan(Math.PI / 4 + loc.lat * D2R / 2));
-  const h = HALF_KM * 1000 / Math.cos(loc.lat * D2R);
-  return { mx, my, h, bb: [mx - h, my - h, mx + h, my + h] };
-}
-const isoMin = t => new Date(t).toISOString().slice(0, 16) + 'Z';
-
-const nearCache = new Map();
-function nearestIdx(r, g, b) {
-  const key = (r << 16) | (g << 8) | b;
-  if (nearCache.has(key)) return nearCache.get(key);
-  let best = 0, bd = 1e9;
-  for (let i = 1; i < 256; i++) {
-    const c = PAL[i], dr = (c >> 16) - r, dg = ((c >> 8) & 255) - g, db = (c & 255) - b;
-    const d = dr * dr + dg * dg + db * db;
-    if (d < bd) { bd = d; best = i; }
-  }
-  nearCache.set(key, best);
-  return best;
-}
-
-async function fetchFrame(t, box) {
-  const u = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q-t.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap'
-    + '&LAYERS=nexrad-n0q-wmst&STYLES=&TIME=' + new Date(t).toISOString().slice(0, 16) + ':00Z'
-    + '&SRS=EPSG:3857&BBOX=' + box.bb.map(v => v.toFixed(1)).join(',')
-    + `&WIDTH=${N}&HEIGHT=${N}&FORMAT=image/png&TRANSPARENT=true`;
-  const r = await fetchT(u);
-  if (!r.ok) throw new Error('radar frame ' + r.status);
-  const blob = await r.blob();
-  if (!blob.type.includes('png')) throw new Error('radar frame not an image');
-  const bmp = await createImageBitmap(blob);
-  const c = document.createElement('canvas');
-  c.width = N; c.height = N;
-  const g = c.getContext('2d', { willReadFrequently: true });
-  g.drawImage(bmp, 0, 0);
-  const img = g.getImageData(0, 0, N, N), d = img.data;
-  const idx = new Uint8Array(N * N);
-  let opaque = 0;
-  for (let p = 0, i = 0; p < N * N; p++, i += 4) {
-    if (d[i + 3] < 128) { d[i + 3] = 0; continue; }
-    opaque++;
-    const k = RGB2IDX.get((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
-    const ix = k === undefined ? nearestIdx(d[i], d[i + 1], d[i + 2]) : k;
-    idx[p] = ix;
-    d[i + 3] = DBZ[ix] < 10 ? 0 : 255;     // hide clear-air junk on the map
-  }
-  g.putImageData(img, 0, 0);
-  return { t, idx, canvas: c, rgba: img, opaque };
-}
-
-async function pullRadar(loc, progress) {
-  const now = Date.now();
-  const li = await getJSON('https://mesonet.agron.iastate.edu/json/radar.py?operation=list&product=N0Q&radar=USCOMP'
-    + `&start=${isoMin(now - 55 * MIN)}&end=${isoMin(now + MIN)}`);
-  const scans = (li.scans || []).map(s => Date.parse(s.ts)).filter(t => t <= now).sort((a, b) => a - b).slice(-8);
-  if (scans.length < 2) throw new Error('no recent radar scans listed');
-  const box = mercBox(loc);
-  let done = 0;
-  const got = await Promise.all(scans.map(t => fetchFrame(t, box)
-    .then(f => { progress(`radar ${++done}/${scans.length}`); return f; })
-    .catch(() => null)));
-  const frames = got.filter(Boolean);
-  // the newest listed scan is sometimes not rendered yet and comes back blank
-  while (frames.length > 2 && frames[frames.length - 1].opaque === 0 && frames[frames.length - 2].opaque > 500) frames.pop();
-  const use = frames.slice(-7);
-  if (use.length < 2) throw new Error('not enough radar frames came back');
-  return analyzeRadar(use, box);
-}
-
-// ─── radar: motion ──────────────────────────────────────────────────────────
-const DS = 3, G = N / DS;     // coarse grid for matching (~3.3 km cells)
-function coarse(fr) {
-  const out = new Float32Array(G * G);
-  for (let y = 0; y < N; y++) {
-    const row = ((y / DS) | 0) * G;
-    for (let x = 0; x < N; x++) out[row + ((x / DS) | 0)] += FEAT[fr.idx[y * N + x]];
-  }
-  for (let i = 0; i < out.length; i++) out[i] /= DS * DS;
-  return out;
-}
-
-// Block matching: where did each 53 km block of echo move between frames a and b?
-function matchBlocks(a, b, dtMin, weight, vecs) {
-  const B = 16, SR = 8, STR = 8, W = 2 * SR + 1;
-  const surf = new Float32Array(W * W);
-  for (let by = 0; by + B <= G; by += STR) {
-    for (let bx = 0; bx + B <= G; bx += STR) {
-      let cnt = 0;
-      for (let y = 0; y < B; y++) for (let x = 0; x < B; x++) if (a[(by + y) * G + bx + x] > 2) cnt++;
-      if (cnt < B * B * 0.08) continue;
-      let best = Infinity, bi = 0, tot = 0;
-      for (let dy = -SR; dy <= SR; dy++) {
-        for (let dx = -SR; dx <= SR; dx++) {
-          let s = 0, n = 0;
-          for (let y = 0; y < B; y++) {
-            const yy = by + y + dy;
-            if (yy < 0 || yy >= G) continue;
-            const ar = (by + y) * G + bx, br = yy * G + bx + dx;
-            for (let x = 0; x < B; x++) {
-              const xx = bx + x + dx;
-              if (xx < 0 || xx >= G) continue;
-              const d = a[ar + x] - b[br + x];
-              s += d * d; n++;
-            }
-          }
-          s = n > B * B * 0.5 ? s / n : 1e9;
-          const k = (dy + SR) * W + dx + SR;
-          surf[k] = s; tot += Math.min(s, 1e4);
-          if (s < best) { best = s; bi = k; }
-        }
-      }
-      const mean = tot / surf.length;
-      const q = (mean - best) / (mean + 1e-6);
-      if (q < 0.15) continue;
-      const ix = bi % W, iy = (bi / W) | 0;
-      if (ix === 0 || iy === 0 || ix === W - 1 || iy === W - 1) continue;   // ran off the search window
-      const sub = (l, c, r) => { const den = l - 2 * c + r; return den > 0 ? clamp((l - r) / (2 * den), -0.5, 0.5) : 0; };
-      const fx = sub(surf[bi - 1], best, surf[bi + 1]);
-      const fy = sub(surf[bi - W], best, surf[bi + W]);
-      const dxc = ix - SR + fx, dyc = iy - SR + fy;
-      vecs.push({
-        x: (bx + B / 2) * DS, y: (by + B / 2) * DS,
-        u: dxc * DS / dtMin, v: dyc * DS / dtMin,    // full-res px per minute
-        w: weight * q * cnt / (B * B),
-      });
-    }
-  }
-}
-
-function wMedian(vals, ws) {
-  const o = vals.map((v, i) => [v, ws[i]]).sort((p, q) => p[0] - q[0]);
-  const half = ws.reduce((s, w) => s + w, 0) / 2;
-  let acc = 0;
-  for (const [v, w] of o) { acc += w; if (acc >= half) return v; }
-  return o.length ? o[o.length - 1][0] : 0;
-}
-
-const VS = 10, VGN = N / VS + 1;
-function buildField(vecs) {
-  const U = new Float32Array(VGN * VGN), V = new Float32Array(VGN * VGN);
-  if (!vecs.length) return { U, V, ug: 0, vg: 0, n: 0 };
-  let ug = wMedian(vecs.map(p => p.u), vecs.map(p => p.w));
-  let vg = wMedian(vecs.map(p => p.v), vecs.map(p => p.w));
-  const keep = vecs.filter(p => Math.hypot(p.u - ug, p.v - vg) < 0.7);   // 0.7 px/min ≈ 47 km/h off the median
-  const use = keep.length >= 2 ? keep : vecs;
-  const sw = use.reduce((s, p) => s + p.w, 0);
-  ug = use.reduce((s, p) => s + p.w * p.u, 0) / sw;
-  vg = use.reduce((s, p) => s + p.w * p.v, 0) / sw;
-  const sig2 = 2 * 55 * 55, lam = 0.2;
-  for (let j = 0; j < VGN; j++) {
-    for (let i = 0; i < VGN; i++) {
-      const x = i * VS, y = j * VS;
-      let su = lam * ug, sv = lam * vg, ws = lam;
-      for (const p of use) {
-        const w = p.w * Math.exp(-((p.x - x) ** 2 + (p.y - y) ** 2) / sig2);
-        su += w * p.u; sv += w * p.v; ws += w;
-      }
-      U[j * VGN + i] = su / ws; V[j * VGN + i] = sv / ws;
-    }
-  }
-  return { U, V, ug, vg, n: use.length };
-}
-
-let _u = 0, _v = 0;
-function vAt(F, x, y) {
-  const gx = clamp(x / VS, 0, VGN - 1.001), gy = clamp(y / VS, 0, VGN - 1.001);
-  const i = gx | 0, j = gy | 0, fx = gx - i, fy = gy - j, k = j * VGN + i;
-  _u = (F.U[k] * (1 - fx) + F.U[k + 1] * fx) * (1 - fy) + (F.U[k + VGN] * (1 - fx) + F.U[k + VGN + 1] * fx) * fy;
-  _v = (F.V[k] * (1 - fx) + F.V[k + 1] * fx) * (1 - fy) + (F.V[k + VGN] * (1 - fx) + F.V[k + VGN + 1] * fx) * fy;
-}
-
-function rate3(idx, x, y) {
-  const xi = Math.floor(x), yi = Math.floor(y);
-  if (xi < 1 || yi < 1 || xi >= N - 1 || yi >= N - 1) return null;
-  let s = 0;
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) s += RATE[idx[(yi + dy) * N + xi + dx]];
-  return s / 9;
-}
-
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-function gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
-
-function analyzeRadar(frames, box) {
-  const n = frames.length, last = frames[n - 1], T0 = last.t;
-  const co = frames.map(coarse);
-  const pickStart = e => {
-    let bi = -1, bd = 1e9;
-    for (let i = 0; i < e; i++) {
-      const dt = (frames[e].t - frames[i].t) / MIN;
-      if (dt < 8 || dt > 22) continue;
-      if (Math.abs(dt - 15) < bd) { bd = Math.abs(dt - 15); bi = i; }
-    }
-    return bi;
-  };
-  const vecs = [];
-  const s1 = pickStart(n - 1);
-  if (s1 >= 0) {
-    matchBlocks(co[s1], co[n - 1], (last.t - frames[s1].t) / MIN, 1, vecs);
-    const s2 = pickStart(s1);
-    if (s2 >= 0) matchBlocks(co[s2], co[s1], (frames[s1].t - frames[s2].t) / MIN, 0.6, vecs);
-  } else {
-    matchBlocks(co[n - 2], co[n - 1], (last.t - frames[n - 2].t) / MIN, 1, vecs);
-  }
-  const F = buildField(vecs);
-
-  const C = N / 2;
-  const past = frames.map(f => ({ t: f.t, rate: rate3(f.idx, C, C) ?? 0 }));
-  const rainingNow = (rate3(last.idx, C, C) ?? 0) >= THR_RATE;
-
-  // ensemble of perturbed backward trajectories
-  const rng = mulberry32(20261003);
-  const leads = []; for (let L = 0; L <= 120; L += 5) leads.push(L);
-  const hits = new Float32Array(leads.length), wetSum = new Float32Array(leads.length);
-  for (let m = 0; m < MEMBERS; m++) {
-    const s = clamp(1 + 0.18 * gauss(rng), 0.55, 1.6), a = 0.24 * gauss(rng);
-    const ox = gauss(rng), oy = gauss(rng), ca = Math.cos(a), sa = Math.sin(a);
-    let x = C, y = C;
-    for (let li = 0; li < leads.length; li++) {
-      if (li > 0) {
-        for (let k = 0; k < 2; k++) {          // two 2.5-min steps per 5-min lead
-          vAt(F, x, y);
-          x -= s * (ca * _u - sa * _v) * 2.5;
-          y -= s * (sa * _u + ca * _v) * 2.5;
-        }
-      }
-      const sig = 1.5 + 0.12 * leads[li];        // position uncertainty grows ~7 km/h
-      const r = rate3(last.idx, x + sig * ox, y + sig * oy) ?? 0;
-      if (r >= THR_RATE) { hits[li]++; wetSum[li] += r; }
-    }
-  }
-  const P = leads.map((L, i) => ({ t: T0 + L * MIN, v: 100 * hits[i] / MEMBERS }));
-  const I = leads.map((L, i) => ({ t: T0 + L * MIN, rate: hits[i] ? wetSum[i] / hits[i] : 0 }));   // intensity if it rains
-
-  // nearest rain to the spot right now
-  let nd = Infinity, nx = 0, ny = 0;
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    if (DBZ[last.idx[y * N + x]] < THR_DBZ) continue;
-    const d = (x + 0.5 - C) ** 2 + (y + 0.5 - C) ** 2;
-    if (d < nd) { nd = d; nx = x + 0.5 - C; ny = C - (y + 0.5); }
-  }
-  const nearest = isFinite(nd) ? { km: Math.sqrt(nd) * KM_PX, dir: compass(Math.atan2(nx, ny) / D2R) } : null;
-
-  const speed = Math.hypot(F.ug, F.vg) * KM_PX * 60;
-  const motion = F.n ? { kmh: speed, toward: compass(Math.atan2(F.ug, -F.vg) / D2R), n: F.n } : null;
-
-  return {
-    rl: { T0, P, I, past, rainingNow, nearest, motion, frames: frames.map(f => f.t) },
-    rh: { frames, F, box },
-  };
-}
-
-// ─── models ─────────────────────────────────────────────────────────────────
-function ringPoints(loc) {
-  const pts = [[loc.lat, loc.lon]];
-  for (const km of [10, 20]) {
-    for (let k = 0; k < 8; k++) {
-      const b = k * 45 * D2R;
-      pts.push([loc.lat + km / 111.32 * Math.cos(b), loc.lon + km / (111.32 * Math.cos(loc.lat * D2R)) * Math.sin(b)]);
-    }
-  }
-  return pts;
-}
-
-async function pullModels(loc) {
-  const pts = ringPoints(loc);
-  const lats = pts.map(p => p[0].toFixed(4)).join(','), lons = pts.map(p => p[1].toFixed(4)).join(',');
-  const base = 'https://api.open-meteo.com/v1/forecast?timeformat=unixtime&timezone=UTC';
-  const [hr, nbm, mh, mn] = await Promise.allSettled([
-    getJSON(`${base}&latitude=${lats}&longitude=${lons}&minutely_15=precipitation&models=ncep_hrrr_conus&forecast_minutely_15=53&past_minutely_15=2`),
-    getJSON(`${base}&latitude=${loc.lat.toFixed(4)}&longitude=${loc.lon.toFixed(4)}&hourly=precipitation_probability,precipitation&models=ncep_nbm_conus&forecast_hours=14&past_hours=1`),
-    getJSON('https://api.open-meteo.com/data/ncep_hrrr_conus/static/meta.json'),
-    getJSON('https://api.open-meteo.com/data/ncep_nbm_conus/static/meta.json'),
+const MODELS = ['ncep_nbm_conus', 'ncep_hrrr_conus', 'best_match'];
+async function pull() {
+  const ll = `latitude=${VENUE.lat}&longitude=${VENUE.lon}`;
+  const day = `start_date=${DATE}&end_date=${DATE}&timezone=${encodeURIComponent(TZ)}&timeformat=unixtime`;
+  const units = 'temperature_unit=fahrenheit&wind_speed_unit=mph';
+  const meta = name => getJSON(`https://${name}/static/meta.json`).catch(() => null);
+  const [det, ens, aq, mEc, mGfs, mNbm, mHrrr, mCams] = await Promise.allSettled([
+    getJSON(`https://api.open-meteo.com/v1/forecast?${ll}&${day}&${units}&models=${MODELS.join(',')}`
+      + '&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,wind_direction_10m,cloud_cover,uv_index,relative_humidity_2m'
+      + '&daily=sunrise,sunset'),
+    getJSON(`https://ensemble-api.open-meteo.com/v1/ensemble?${ll}&${day}&${units}&models=ecmwf_ifs025,gfs025`
+      + '&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,cloud_cover,precipitation'),
+    getJSON(`https://air-quality-api.open-meteo.com/v1/air-quality?${ll}&${day}&current=us_aqi&hourly=us_aqi,us_aqi_pm2_5,us_aqi_ozone`),
+    meta('api.open-meteo.com/data/ecmwf_ifs025'),
+    meta('api.open-meteo.com/data/ncep_gfs025'),
+    meta('api.open-meteo.com/data/ncep_nbm_conus'),
+    meta('api.open-meteo.com/data/ncep_hrrr_conus'),
+    meta('air-quality-api.open-meteo.com/data/cams_global'),
   ]);
-  const out = { errors: [] };
+  const out = { errors: [], meta: {} };
+  const ms = o => o && ({ init: o.last_run_initialisation_time * 1000, avail: o.last_run_availability_time * 1000, end: o.data_end_time * 1000, every: o.update_interval_seconds * 1000 });
+  out.meta = { ecmwf: ms(mEc.value), gfs: ms(mGfs.value), nbm: ms(mNbm.value), hrrr: ms(mHrrr.value), cams: ms(mCams.value) };
 
-  if (hr.status === 'fulfilled') {
-    const arr = Array.isArray(hr.value) ? hr.value : [hr.value];
-    const times = arr[0].minutely_15.time.map(t => t * 1000);
-    const series = arr.map(o => o.minutely_15.precipitation.map(v => v ?? 0));
-    const point = series[0].map(v => v * 4);    // mm per 15 min → mm/h
-    const nb = times.map((_, i) => {
-      let wet = 0;
-      for (const s of series) {
-        const m = Math.max(s[i - 1] ?? 0, s[i] ?? 0, s[i + 1] ?? 0);
-        if (m >= 0.1) wet++;
-      }
-      return 100 * wet / series.length;
-    });
-    const valid = arr[0].minutely_15.precipitation.map(v => v != null);
-    out.hrrr = { times, point, nb, valid };
-  } else out.errors.push('HRRR: ' + hr.reason.message);
+  if (det.status === 'fulfilled') {
+    const h = det.value.hourly, times = h.time.map(t => t * 1000);
+    const col = (v, m) => (h[`${v}_${m}`] || h[v] || []).map((x, i) => ({ t: times[i], v: x })).filter(p => p.v != null);
+    out.nbm = {}; out.hrrr = {}; out.best = {};
+    for (const v of ['temperature_2m', 'apparent_temperature', 'wind_speed_10m', 'wind_gusts_10m', 'wind_direction_10m', 'cloud_cover', 'uv_index', 'relative_humidity_2m']) {
+      out.nbm[v] = col(v, 'ncep_nbm_conus');
+      out.hrrr[v] = col(v, 'ncep_hrrr_conus');
+      out.best[v] = col(v, 'best_match');
+    }
+    const d = det.value.daily || {};
+    const key = k => Object.keys(d).find(x => x.startsWith(k) && d[x] && d[x][0] != null);
+    if (key('sunrise')) out.sun = { rise: d[key('sunrise')][0] * 1000, set: d[key('sunset')][0] * 1000 };
+  } else out.errors.push('Models: ' + det.reason.message);
 
-  if (nbm.status === 'fulfilled') {
-    const h = nbm.value.hourly;
-    out.nbm = { times: h.time.map(t => t * 1000), pop: h.precipitation_probability };
-  } else out.errors.push('NBM: ' + nbm.reason.message);
+  if (ens.status === 'fulfilled') {
+    const h = ens.value.hourly, times = h.time.map(t => t * 1000);
+    out.ens = {};
+    for (const v of ['temperature_2m', 'apparent_temperature', 'wind_speed_10m', 'wind_gusts_10m', 'cloud_cover', 'precipitation']) {
+      const keys = Object.keys(h).filter(k => k.startsWith(v + '_'));
+      out.ens[v] = times.map((t, i) => {
+        const vals = keys.map(k => h[k][i]).filter(x => x != null).sort((a, b) => a - b);
+        if (!vals.length) return null;
+        const q = p => vals[Math.min(vals.length - 1, Math.max(0, Math.round(p * (vals.length - 1))))];
+        return { t, lo: q(0.1), mid: q(0.5), hi: q(0.9), n: vals.length, wet: vals.filter(x => x >= 0.1).length / vals.length };
+      }).filter(Boolean);
+    }
+  } else out.errors.push('Ensembles: ' + ens.reason.message);
 
-  if (mh.status === 'fulfilled') {
-    out.hrrrMeta = { init: mh.value.last_run_initialisation_time * 1000, avail: mh.value.last_run_availability_time * 1000, every: mh.value.update_interval_seconds * 1000 };
-  }
-  if (mn.status === 'fulfilled') {
-    out.nbmMeta = { init: mn.value.last_run_initialisation_time * 1000, avail: mn.value.last_run_availability_time * 1000, every: mn.value.update_interval_seconds * 1000 };
-  }
-  if (!out.hrrr && !out.nbm) throw new Error(out.errors.join(' · '));
+  if (aq.status === 'fulfilled') {
+    const h = aq.value.hourly, times = h.time.map(t => t * 1000);
+    out.aq = {
+      pts: times.map((t, i) => ({ t, v: h.us_aqi[i], pm: h.us_aqi_pm2_5?.[i], o3: h.us_aqi_ozone?.[i] })).filter(p => p.v != null),
+      now: aq.value.current?.us_aqi ?? null,
+    };
+  } else out.errors.push('Air quality: ' + aq.reason.message);
+
+  if (!out.nbm && !out.ens) throw new Error(out.errors.join(' · '));
   return out;
 }
 
-// ─── map ────────────────────────────────────────────────────────────────────
-function darkMode() {
-  const t = document.documentElement.dataset.theme;
-  if (t) return t === 'dark';
-  return matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
-function loadTiles(box) {
-  const z = 8, world = 256 * 2 ** z, span = 2 * Math.PI * R_E;
-  const wx0 = (box.bb[0] + Math.PI * R_E) / span * world, wx1 = (box.bb[2] + Math.PI * R_E) / span * world;
-  const wy0 = (Math.PI * R_E - box.bb[3]) / span * world, wy1 = (Math.PI * R_E - box.bb[1]) / span * world;
-  const W = $('map').width, sc = W / (wx1 - wx0);
-  const theme = darkMode() ? 'Dark' : 'Light';
-  const mk = layer => {
-    const list = [];
-    for (let ty = Math.floor(wy0 / 256); ty <= Math.floor(wy1 / 256); ty++) {
-      for (let tx = Math.floor(wx0 / 256); tx <= Math.floor(wx1 / 256); tx++) {
-        const img = new Image();
-        img.onload = () => scheduleMap();
-        img.src = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${theme}_Gray_${layer}/MapServer/tile/${z}/${ty}/${tx}`;
-        list.push({ img, x: (tx * 256 - wx0) * sc, y: (ty * 256 - wy0) * sc, s: 256 * sc });
-      }
-    }
-    return list;
-  };
-  return { base: mk('Base'), labels: mk('Reference') };
-}
-
-function extrapolated(L) {
-  if (S.extrap.has(L)) return S.extrap.get(L);
-  const { frames, F } = S.rh, src = frames[frames.length - 1].rgba.data;
-  const out = new ImageData(N, N), od = out.data;
-  const steps = Math.round(L / 5);
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < N; x++) {
-      let px = x + 0.5, py = y + 0.5;
-      for (let k = 0; k < steps; k++) { vAt(F, px, py); px -= _u * 5; py -= _v * 5; }
-      if (px < 0 || py < 0 || px >= N || py >= N) continue;
-      const si = ((py | 0) * N + (px | 0)) * 4, oi = (y * N + x) * 4;
-      od[oi] = src[si]; od[oi + 1] = src[si + 1]; od[oi + 2] = src[si + 2]; od[oi + 3] = src[si + 3];
+// ─── series helpers ─────────────────────────────────────────────────────────
+function at(pts, t, key = 'v') {
+  if (!pts || !pts.length || t < pts[0].t || t > pts[pts.length - 1].t) return null;
+  for (let i = 1; i < pts.length; i++) {
+    if (t <= pts[i].t) {
+      const a = pts[i - 1], b = pts[i];
+      if (a[key] == null || b[key] == null) return a[key] ?? b[key];
+      return a[key] + (b[key] - a[key]) * (t - a.t) / (b.t - a.t || 1);
     }
   }
-  const c = document.createElement('canvas');
-  c.width = N; c.height = N;
-  c.getContext('2d').putImageData(out, 0, 0);
-  S.extrap.set(L, c);
-  return c;
+  return pts[pts.length - 1][key];
 }
+function windowed(pts, a, b, key = 'v') { return (pts || []).filter(p => p.t >= a && p.t <= b && p[key] != null).map(p => p[key]); }
+const maxOf = arr => arr.length ? Math.max(...arr) : null;
+const minOf = arr => arr.length ? Math.min(...arr) : null;
+const hasHrrr = () => (S.fc?.hrrr?.temperature_2m || []).some(p => p.t >= T0 && p.t <= T1);
+const angDiff = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
 
-function radarImage(L) {
-  const { frames } = S.rh;
-  if (L <= 0) {
-    const target = S.rl.T0 + L * MIN;
-    let best = frames[0];
-    for (const f of frames) if (Math.abs(f.t - target) < Math.abs(best.t - target)) best = f;
-    return { c: best.canvas, t: best.t, obs: true };
-  }
-  return { c: extrapolated(L), t: S.rl.T0 + L * MIN, obs: false };
-}
-
-let mapQueued = false;
-function scheduleMap() {
-  if (mapQueued) return;
-  mapQueued = true;
-  requestAnimationFrame(() => { mapQueued = false; renderMap(); });
-}
-
-function renderMap() {
-  const cv = $('map'), g = cv.getContext('2d'), W = cv.width;
-  g.fillStyle = css('--map-bg');
-  g.fillRect(0, 0, W, W);
-  if (!S.rh) return;
-  const drawLayer = list => { for (const t of list) if (t.img.complete && t.img.naturalWidth) g.drawImage(t.img, t.x, t.y, t.s, t.s); };
-  if (S.tiles) drawLayer(S.tiles.base);
-  const im = radarImage(S.lead);
-  g.imageSmoothingEnabled = true;
-  g.globalAlpha = 0.82;
-  g.drawImage(im.c, 0, 0, W, W);
-  g.globalAlpha = 1;
-  if (S.tiles) drawLayer(S.tiles.labels);
-
-  const C = W / 2, pxKm = W / N / KM_PX;
-  g.strokeStyle = css('--ring');
-  g.lineWidth = 1.5;
-  g.setLineDash([6, 6]);
-  g.font = '600 20px system-ui, sans-serif';
-  g.fillStyle = css('--ring');
-  for (const km of [25, 50, 100]) {
-    g.beginPath(); g.arc(C, C, km * pxKm, 0, 2 * Math.PI); g.stroke();
-    g.fillText(`${km} km`, C + km * pxKm * 0.71 + 4, C - km * pxKm * 0.71 - 4);
-  }
-  g.setLineDash([]);
-
-  const mo = S.rl.motion;
-  if (mo && mo.kmh > 3) {
-    const u = S.rh.F.ug, v = S.rh.F.vg, len = Math.hypot(u, v);
-    const L = clamp(len * 30 * (W / N), 40, 160);      // ~30 min of travel
-    const ex = C + u / len * L, ey = C + v / len * L;
-    g.strokeStyle = '#ffffff';
-    g.lineWidth = 7;
-    g.lineCap = 'round';
-    g.beginPath(); g.moveTo(C, C); g.lineTo(ex, ey); g.stroke();
-    g.strokeStyle = '#111111';
-    g.lineWidth = 3.5;
-    g.beginPath(); g.moveTo(C, C); g.lineTo(ex, ey); g.stroke();
-    const ang = Math.atan2(ey - C, ex - C);
-    g.fillStyle = '#111111';
-    g.beginPath();
-    g.moveTo(ex + Math.cos(ang) * 10, ey + Math.sin(ang) * 10);
-    g.lineTo(ex + Math.cos(ang + 2.4) * 16, ey + Math.sin(ang + 2.4) * 16);
-    g.lineTo(ex + Math.cos(ang - 2.4) * 16, ey + Math.sin(ang - 2.4) * 16);
-    g.closePath(); g.fill();
-  }
-  g.fillStyle = css('--pin');
-  g.strokeStyle = '#ffffff';
-  g.lineWidth = 4;
-  g.beginPath(); g.arc(C, C, 11, 0, 2 * Math.PI); g.fill(); g.stroke();
-
-  const mt = $('mapTime');
-  mt.hidden = false;
-  mt.textContent = `${fmtTime(im.t)} · ${im.obs ? 'observed' : 'projected'}`;
-}
-
-function setLead(L) {
-  S.lead = L;
-  $('lead').value = L;
-  $('leadLbl').textContent = L === 0 ? 'latest' : (L > 0 ? `+${L} min` : `${L} min`);
-  scheduleMap();
-}
-
-function togglePlay() {
-  if (S.playTimer) { stopPlay(); return; }
-  $('btnPlay').textContent = '❚❚';
-  let L = S.lead >= 120 ? -30 : S.lead;
-  S.playTimer = setInterval(() => {
-    L += 5;
-    if (L > 120) L = -30;
-    setLead(L);
-  }, 450);
-}
-function stopPlay() {
-  clearInterval(S.playTimer);
-  S.playTimer = null;
-  $('btnPlay').textContent = '▶';
-}
-
-// ─── charts ─────────────────────────────────────────────────────────────────
-function seriesAt(s, t) {
-  if (s.kind === 'step') {
-    for (const p of s.pts) if (t > p.a && t <= p.b) return p.v;
-    return null;
-  }
-  const p = s.pts;
-  if (!p.length || t < p[0].t || t > p[p.length - 1].t) return null;
-  for (let i = 1; i < p.length; i++) {
-    if (t <= p[i].t) {
-      const f = (t - p[i - 1].t) / (p[i].t - p[i - 1].t || 1);
-      return p[i - 1].v + f * (p[i].v - p[i - 1].v);
-    }
-  }
-  return p[p.length - 1].v;
-}
-
+// ─── chart ──────────────────────────────────────────────────────────────────
 function drawChart(cv, hoverX) {
   const sp = cv._spec;
   if (!sp) return;
-  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, H = 196;
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, H = sp.height || 200;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(H * dpr)) {
     cv.width = Math.round(w * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
   }
   const g = cv.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, H);
-  const padL = 36, padR = 10, top = 8, plotH = 128, stripY = top + plotH + 10, stripH = 12, axisY = stripY + stripH + 16;
-  const pw = w - padL - padR;
-  const X = t => padL + (t - sp.t0) / (sp.t1 - sp.t0) * pw;
-  const Y = v => top + plotH * (1 - v / 100);
-  const grid = css('--grid'), muted = css('--muted'), text2 = css('--text-2');
+  const padL = 36, padR = 10, top = sp.arrows ? 26 : 16, bottom = 22, plotH = H - top - bottom, pw = w - padL - padR;
+  const X = t => padL + (t - T0) / (T1 - T0) * pw;
+  const Y = v => top + plotH * (1 - (v - sp.yMin) / (sp.yMax - sp.yMin));
+  const muted = css('--muted'), grid = css('--grid'), text2 = css('--text-2');
+  g.font = '11px system-ui, sans-serif';
 
-  if (sp.pastEnd && sp.pastEnd > sp.t0) {
-    g.fillStyle = css('--past');
-    g.fillRect(X(sp.t0), top, X(sp.pastEnd) - X(sp.t0), plotH);
-    g.fillStyle = muted;
-    g.font = '11px system-ui, sans-serif';
-    g.textAlign = 'center';
-    g.fillText('observed', (X(sp.t0) + X(sp.pastEnd)) / 2, top + 14);
+  // night, event blocks, value bands
+  if (S.fc?.sun) {
+    g.fillStyle = css('--night');
+    g.fillRect(X(T0), top, X(S.fc.sun.rise) - X(T0), plotH);
+    g.fillRect(X(S.fc.sun.set), top, X(T1) - X(S.fc.sun.set), plotH);
+  }
+  g.fillStyle = css('--zone');
+  for (const z of ZONES) g.fillRect(X(z.a), top, X(z.b) - X(z.a), plotH);
+  g.fillStyle = muted;
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+  for (const z of ZONES) g.fillText(z.label + (z.est ? ' (est.)' : ''), (X(z.a) + X(z.b)) / 2, top - (sp.arrows ? 16 : 4));
+  for (const b of sp.bg || []) {
+    const ya = Y(Math.min(b.hi, sp.yMax)), yb = Y(Math.max(b.lo, sp.yMin));
+    if (yb <= ya) continue;
+    g.globalAlpha = 0.14; g.fillStyle = b.color; g.fillRect(padL, ya, pw, yb - ya); g.globalAlpha = 1;
+    g.fillStyle = muted; g.textAlign = 'right'; g.textBaseline = 'middle';
+    if (yb - ya > 12) g.fillText(b.label, w - padR - 4, (ya + yb) / 2);
   }
 
+  // grid
   g.lineWidth = 1;
-  g.font = '11px system-ui, sans-serif';
   g.textAlign = 'right';
   g.textBaseline = 'middle';
-  for (const v of [0, 25, 50, 75, 100]) {
+  for (const v of sp.yTicks) {
     g.strokeStyle = grid;
     g.beginPath(); g.moveTo(padL, Math.round(Y(v)) + 0.5); g.lineTo(w - padR, Math.round(Y(v)) + 0.5); g.stroke();
-    if (v % 50 === 0) { g.fillStyle = muted; g.fillText(v + '%', padL - 6, Y(v)); }
+    g.fillStyle = muted; g.fillText(v + (sp.unit || ''), padL - 6, Y(v));
   }
 
+  // series
+  g.save();
+  g.beginPath(); g.rect(padL, top - 2, pw, plotH + 4); g.clip();
   for (const s of sp.series) {
+    const pts = (s.pts || []).filter(p => p.t >= T0 - HOUR && p.t <= T1 + HOUR);
+    if (!pts.length) continue;
+    if (s.kind === 'band') {
+      g.beginPath();
+      pts.forEach((p, i) => i ? g.lineTo(X(p.t), Y(p.hi)) : g.moveTo(X(p.t), Y(p.hi)));
+      for (let i = pts.length - 1; i >= 0; i--) g.lineTo(X(pts[i].t), Y(pts[i].lo));
+      g.closePath();
+      g.fillStyle = css('--band'); g.fill();
+      continue;
+    }
     const col = css(s.color);
-    g.strokeStyle = col;
-    g.lineWidth = 2;
-    g.lineJoin = 'round';
-    if (s.kind === 'step') {
+    if (s.fill) {
+      g.beginPath(); g.moveTo(X(pts[0].t), Y(sp.yMin));
+      for (const p of pts) g.lineTo(X(p.t), Y(p.v));
+      g.lineTo(X(pts[pts.length - 1].t), Y(sp.yMin)); g.closePath();
+      g.globalAlpha = 0.16; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
+    }
+    g.strokeStyle = col; g.lineWidth = 2; g.lineJoin = 'round';
+    g.setLineDash(s.dash ? [5, 4] : []);
+    g.beginPath();
+    pts.forEach((p, i) => i ? g.lineTo(X(p.t), Y(p.v)) : g.moveTo(X(p.t), Y(p.v)));
+    g.stroke();
+    g.setLineDash([]);
+  }
+  g.restore();
+
+  // wind arrows (pointing where the wind blows to)
+  if (sp.arrows) {
+    g.strokeStyle = text2; g.fillStyle = text2; g.lineWidth = 1.5;
+    for (const a of sp.arrows) {
+      if (a.t < T0 || a.t > T1) continue;
+      const x = X(a.t), y = top - 7, ang = (a.v + 180) * Math.PI / 180;
+      const dx = Math.sin(ang), dy = -Math.cos(ang);
+      g.beginPath(); g.moveTo(x - dx * 5, y - dy * 5); g.lineTo(x + dx * 5, y + dy * 5); g.stroke();
       g.beginPath();
-      let prev = null;
-      for (const p of s.pts) {
-        if (p.b < sp.t0 || p.a > sp.t1 || p.v == null) { prev = null; continue; }
-        const xa = X(Math.max(p.a, sp.t0)), xb = X(Math.min(p.b, sp.t1)), y = Y(p.v);
-        if (prev == null) g.moveTo(xa, y); else g.lineTo(xa, y);
-        g.lineTo(xb, y);
-        prev = p;
-      }
-      g.stroke();
-    } else {
-      const pts = s.pts.filter(p => p.t >= sp.t0 - 15 * MIN && p.t <= sp.t1 + 15 * MIN);
-      if (!pts.length) continue;
-      g.save();
-      g.beginPath(); g.rect(padL, 0, pw, H); g.clip();
-      if (s.fill) {
-        g.beginPath();
-        g.moveTo(X(pts[0].t), Y(0));
-        for (const p of pts) g.lineTo(X(p.t), Y(p.v));
-        g.lineTo(X(pts[pts.length - 1].t), Y(0));
-        g.closePath();
-        g.globalAlpha = 0.16; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
-      }
-      g.beginPath();
-      pts.forEach((p, i) => i ? g.lineTo(X(p.t), Y(p.v)) : g.moveTo(X(p.t), Y(p.v)));
-      g.stroke();
-      g.restore();
+      g.moveTo(x + dx * 6, y + dy * 6);
+      g.lineTo(x + dx * 1 - dy * 3.5, y + dy * 1 + dx * 3.5);
+      g.lineTo(x + dx * 1 + dy * 3.5, y + dy * 1 - dx * 3.5);
+      g.closePath(); g.fill();
     }
   }
 
-  // intensity strip
-  g.fillStyle = grid;
-  g.beginPath(); g.roundRect(padL, stripY, pw, stripH, 3); g.fill();
-  for (const c of sp.strip) {
-    const cat = category(c.rate);
-    if (!cat || c.b < sp.t0 || c.a > sp.t1) continue;
-    const xa = X(Math.max(c.a, sp.t0)), xb = X(Math.min(c.b, sp.t1));
-    g.globalAlpha = c.alpha ?? 1;
-    g.fillStyle = css(cat.v);
-    g.fillRect(xa, stripY, Math.max(1, xb - xa - 1), stripH);
+  // selected band
+  const band = SCHEDULE.find(b => b.name === S.band);
+  if (band) {
+    const x = Math.round(X(band.t)) + 0.5;
+    g.strokeStyle = css('--mark'); g.setLineDash([3, 3]); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x, top); g.lineTo(x, top + plotH); g.stroke(); g.setLineDash([]);
   }
-  g.globalAlpha = 1;
-  g.fillStyle = muted;
-  g.textAlign = 'right';
-  g.fillText('rain', padL - 6, stripY + stripH / 2);
 
   // time axis
-  g.textAlign = 'center';
-  g.textBaseline = 'alphabetic';
-  const ticks = makeTicks(sp.t0, sp.t1, sp.tickMin);
-  for (const t of ticks) {
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = muted;
+  for (let t = CDT(6); t <= T1; t += 2 * HOUR) {
     const x = X(t);
-    g.strokeStyle = grid;
-    g.beginPath(); g.moveTo(Math.round(x) + 0.5, stripY + stripH); g.lineTo(Math.round(x) + 0.5, stripY + stripH + 4); g.stroke();
-    if (x > padL + 10 && x < w - padR - 10) { g.fillStyle = muted; g.fillText(fmtTick(t), x, axisY); }
+    if (x > padL + 8 && x < w - padR - 8) g.fillText(fmtTick(t), x, H - 6);
   }
 
-  // now
-  const nowT = Date.now();
-  if (nowT >= sp.t0 && nowT <= sp.t1) {
-    const x = Math.round(X(nowT)) + 0.5;
-    g.strokeStyle = text2;
-    g.setLineDash([3, 3]);
-    g.beginPath(); g.moveTo(x, top); g.lineTo(x, stripY + stripH); g.stroke();
-    g.setLineDash([]);
-    g.fillStyle = text2;
-    g.textAlign = x > w - 40 ? 'right' : 'left';
-    g.fillText('now', x + (x > w - 40 ? -4 : 4), top + plotH - 6);
-  }
-
-  const tip = cv._tip;
+  // hover
+  const tip = cv.parentElement.querySelector('.tip');
   if (hoverX == null || hoverX < padL || hoverX > w - padR) { tip.style.display = 'none'; return; }
-  const t = sp.t0 + (hoverX - padL) / pw * (sp.t1 - sp.t0);
-  g.strokeStyle = text2;
-  g.lineWidth = 1;
-  g.beginPath(); g.moveTo(Math.round(hoverX) + 0.5, top); g.lineTo(Math.round(hoverX) + 0.5, stripY + stripH); g.stroke();
+  const t = T0 + (hoverX - padL) / pw * (T1 - T0);
+  g.strokeStyle = text2; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(Math.round(hoverX) + 0.5, top); g.lineTo(Math.round(hoverX) + 0.5, top + plotH); g.stroke();
   const rows = [];
   for (const s of sp.series) {
-    const v = seriesAt(s, t);
+    if (s.kind === 'band') {
+      const lo = at(s.pts, t, 'lo'), hi = at(s.pts, t, 'hi');
+      if (lo != null) rows.push(`<div class="row"><i class="sw box" style="background:var(--band)"></i>Range: <b>${r0(lo)}–${r0(hi)}${sp.unit}</b></div>`);
+      continue;
+    }
+    const v = at(s.pts, t);
     if (v == null) continue;
-    const surf = css('--surface');
-    g.fillStyle = css(s.color); g.strokeStyle = surf; g.lineWidth = 2;
+    g.fillStyle = css(s.color); g.strokeStyle = css('--surface'); g.lineWidth = 2;
     g.beginPath(); g.arc(hoverX, Y(v), 4.5, 0, 2 * Math.PI); g.fill(); g.stroke();
-    rows.push(`<div class="row"><i class="sw" style="background:var(${s.color})"></i>${s.label}: <b>${Math.round(v)}%</b></div>`);
+    rows.push(`<div class="row"><i class="sw" style="background:var(${s.color})"></i>${s.label}: <b>${r0(v)}${sp.unit}</b></div>`);
   }
-  const cell = sp.strip.find(c => t > c.a && t <= c.b);
-  if (cell) {
-    const cat = category(cell.rate);
-    rows.push(`<div class="row"><i class="sw box" style="background:var(${cat ? cat.v : '--grid'})"></i>${sp.stripLabel}: <b>${cat ? `${cat.name} · ${fmtRate(cell.rate)} mm/h` : 'none'}</b></div>`);
-  }
-  tip.innerHTML = `<div class="t">${fmtTime(t)}</div>${rows.join('') || '<div class="muted">no data</div>'}`;
+  if (sp.extra) rows.push(...sp.extra(t));
+  const inBlock = BLOCKS.find(b => t >= b.a && t < b.b);
+  tip.innerHTML = `<div class="t">${fmtTime(t)}${inBlock ? ' · ' + inBlock.label : ''}</div>${rows.join('') || '<div class="muted">no data</div>'}`;
   tip.style.display = 'block';
   const tw = tip.offsetWidth;
   tip.style.left = (hoverX + 12 + tw > w ? hoverX - 12 - tw : hoverX + 12) + 'px';
 }
 
-function makeTicks(t0, t1, stepMin) {
-  const d = new Date(t0);
-  d.setHours(0, 0, 0, 0);
-  const mid = d.getTime();
-  const m0 = Math.ceil((t0 - mid) / MIN / stepMin) * stepMin;
-  const out = [];
-  for (let m = m0; mid + m * MIN <= t1; m += stepMin) out.push(mid + m * MIN);
-  return out;
-}
-
-function hookChart(cv, tip) {
-  cv._tip = tip;
-  const at = e => e.clientX - cv.getBoundingClientRect().left;
-  cv.addEventListener('pointerdown', e => drawChart(cv, at(e)));
-  cv.addEventListener('pointermove', e => drawChart(cv, at(e)));
+function hookChart(cv) {
+  const xAt = e => e.clientX - cv.getBoundingClientRect().left;
+  cv.addEventListener('pointerdown', e => drawChart(cv, xAt(e)));
+  cv.addEventListener('pointermove', e => drawChart(cv, xAt(e)));
   cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') drawChart(cv, null); });
   cv.addEventListener('pointercancel', () => drawChart(cv, null));
   document.addEventListener('pointerdown', e => { if (e.target !== cv) drawChart(cv, null); });
 }
 
-function rampHTML() {
-  return ['light', 'moderate', 'heavy', 'violent'].map((n, i) =>
-    `<span><i class="sw box" style="background:var(--r${i + 1})"></i>${n}</span>`).join('');
+function niceRange(vals, pad, step) {
+  const lo = Math.floor((Math.min(...vals) - pad) / step) * step, hi = Math.ceil((Math.max(...vals) + pad) / step) * step;
+  const ticks = []; for (let v = lo; v <= hi; v += step) ticks.push(v);
+  return { yMin: lo, yMax: hi, yTicks: ticks };
 }
+
+const AQI_BANDS = [
+  { lo: 0, hi: 50, color: '#0ca30c', label: 'Good' },
+  { lo: 50, hi: 100, color: '#fab219', label: 'Moderate' },
+  { lo: 100, hi: 150, color: '#ec835a', label: 'Sensitive groups' },
+  { lo: 150, hi: 200, color: '#d03b3b', label: 'Unhealthy' },
+  { lo: 200, hi: 300, color: '#8f3f97', label: 'Very unhealthy' },
+];
+const aqiCat = v => AQI_BANDS.find(b => v < b.hi) || AQI_BANDS[AQI_BANDS.length - 1];
 
 function renderCharts() {
-  const rl = S.rl, mo = S.model;
-  const cA = $('chartA'), cB = $('chartB');
-  if (rl) {
-    const strip = rl.past.map(p => ({ a: p.t - 5 * MIN, b: p.t, rate: p.rate }))
-      .concat(rl.I.filter(p => p.t > rl.T0).map((p, i) => ({
-        a: p.t - 5 * MIN, b: p.t, rate: p.rate, alpha: Math.max(0.25, rl.P[i + 1].v / 100),
-      })));
-    cA._spec = {
-      t0: rl.T0 - 30 * MIN, t1: rl.T0 + 120 * MIN, tickMin: 30, pastEnd: rl.T0,
-      series: [{ label: 'Chance', color: '--s1', kind: 'line', fill: true, pts: rl.P }],
-      strip, stripLabel: 'If it rains',
+  const fc = S.fc;
+  const ids = ['cTemp', 'cWind', 'cCloud', 'cRain', 'cAQ'];
+  if (!fc) { for (const id of ids) $(id)._spec = null; return; }
+  const hr = hasHrrr();
+  document.querySelectorAll('.hrrrLeg').forEach(el => el.hidden = !hr);
+  const nbm = fc.nbm || {}, ens = fc.ens || {}, hrrr = fc.hrrr || {};
+  const inWin = p => p.t >= T0 && p.t <= T1;
+
+  {
+    const vals = [...(ens.temperature_2m || []).filter(inWin).flatMap(p => [p.lo, p.hi]),
+      ...(nbm.temperature_2m || []).filter(inWin).map(p => p.v), ...(nbm.apparent_temperature || []).filter(inWin).map(p => p.v)];
+    $('cTemp')._spec = {
+      ...(vals.length ? niceRange(vals, 2, 10) : { yMin: 50, yMax: 100, yTicks: [50, 60, 70, 80, 90, 100] }), unit: '°',
+      series: [
+        { kind: 'band', pts: ens.temperature_2m },
+        { label: 'NBM', color: '--s1', pts: nbm.temperature_2m },
+        { label: 'Feels like', color: '--s2', dash: true, pts: nbm.apparent_temperature },
+        ...(hr ? [{ label: 'HRRR', color: '--s3', pts: hrrr.temperature_2m }] : []),
+      ],
     };
-  } else cA._spec = null;
-
-  if (rl || mo) {
-    const now = Date.now();
-    const series = [];
-    if (rl) series.push({ label: 'Radar', color: '--s1', kind: 'line', pts: rl.P.filter(p => p.t >= now - 10 * MIN) });
-    let strip = [];
-    if (mo?.hrrr) {
-      const h = mo.hrrr, pts = [];
-      h.times.forEach((t, i) => { if (h.valid[i]) pts.push({ t: t - 7.5 * MIN, v: h.nb[i] }); });
-      series.push({ label: 'HRRR ≤20 km', color: '--s2', kind: 'line', pts });
-      strip = h.times.map((t, i) => ({ a: t - 15 * MIN, b: t, rate: h.point[i] })).filter((c, i) => h.valid[i]);
-    }
-    if (mo?.nbm) {
-      series.push({ label: 'NBM', color: '--s3', kind: 'step', pts: mo.nbm.times.map((t, i) => ({ a: t - HOUR, b: t, v: mo.nbm.pop[i] })) });
-    }
-    cB._spec = { t0: now, t1: now + 12 * HOUR, tickMin: 120, series, strip, stripLabel: 'HRRR here' };
-  } else cB._spec = null;
-
-  for (const cv of [cA, cB]) {
-    if (cv._spec) drawChart(cv, null);
-    else { const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); }
   }
-}
-
-// ─── summary + next refresh ─────────────────────────────────────────────────
-function modelPeak(fromT, toT) {
-  const mo = S.model;
-  let best = { v: 0, t: null }, first30 = null;
-  const consider = (t, v) => {
-    if (t < fromT || t > toT || v == null) return;
-    if (v > best.v) best = { v, t };
-    if (v >= 30 && (first30 == null || t < first30)) first30 = t;
+  {
+    const vals = [10, ...(ens.wind_speed_10m || []).filter(inWin).map(p => p.hi), ...(nbm.wind_gusts_10m || []).filter(inWin).map(p => p.v)];
+    const top = Math.ceil((Math.max(...vals) + 2) / 5) * 5, step = top > 30 ? 10 : 5;
+    const ticks = []; for (let v = 0; v <= top; v += step) ticks.push(v);
+    $('cWind')._spec = {
+      yMin: 0, yMax: top, yTicks: ticks, unit: '',
+      series: [
+        { kind: 'band', pts: ens.wind_speed_10m },
+        { label: 'NBM sustained', color: '--s1', pts: nbm.wind_speed_10m },
+        { label: 'NBM gusts', color: '--s2', dash: true, pts: nbm.wind_gusts_10m },
+        ...(hr ? [{ label: 'HRRR', color: '--s3', pts: hrrr.wind_speed_10m }] : []),
+      ],
+      arrows: (nbm.wind_direction_10m || []).filter(p => (Math.round((p.t - CDT(6)) / HOUR)) % 2 === 0),
+      extra: t => {
+        const d = at(nbm.wind_direction_10m, t);
+        return d == null ? [] : [`<div class="row muted">From the ${compass(d)}</div>`];
+      },
+    };
+  }
+  $('cCloud')._spec = {
+    yMin: 0, yMax: 100, yTicks: [0, 50, 100], unit: '%',
+    series: [
+      { kind: 'band', pts: ens.cloud_cover },
+      { label: 'NBM', color: '--s1', pts: nbm.cloud_cover },
+      ...(hr ? [{ label: 'HRRR', color: '--s3', pts: hrrr.cloud_cover }] : []),
+    ],
+    extra: t => {
+      const uv = at(fc.best?.uv_index, t);
+      return uv == null || uv < 0.5 ? [] : [`<div class="row muted">UV index ${uv.toFixed(1)}</div>`];
+    },
   };
-  if (mo?.hrrr) mo.hrrr.times.forEach((t, i) => mo.hrrr.valid[i] && consider(t - 7.5 * MIN, mo.hrrr.nb[i]));
-  if (mo?.nbm) mo.nbm.times.forEach((t, i) => consider(t - 30 * MIN, mo.nbm.pop[i]));
-  return { ...best, first30 };
+  $('cRain')._spec = {
+    yMin: 0, yMax: 100, yTicks: [0, 50, 100], unit: '%', height: 150,
+    series: [{ label: 'Runs with rain', color: '--s1', fill: true, pts: (ens.precipitation || []).map(p => ({ t: p.t, v: 100 * p.wet })) }],
+  };
+
+  const aqPts = (fc.aq?.pts || []).filter(inWin);
+  if (aqPts.length) {
+    const top = Math.max(100, Math.ceil((Math.max(...aqPts.map(p => p.v)) + 10) / 50) * 50);
+    const ticks = []; for (let v = 0; v <= top; v += 50) ticks.push(v);
+    $('cAQ')._spec = {
+      yMin: 0, yMax: top, yTicks: ticks, unit: '', height: 170, bg: AQI_BANDS,
+      series: [{ label: 'US AQI', color: '--s1', pts: aqPts }],
+      extra: t => {
+        const p = aqPts.find(q => Math.abs(q.t - t) < 30 * MIN);
+        if (!p) return [];
+        const driver = (p.o3 ?? 0) >= (p.pm ?? 0) ? 'ozone' : 'fine particles';
+        return [`<div class="row muted">${aqiCat(p.v).label} · mostly ${driver}</div>`];
+      },
+    };
+  } else $('cAQ')._spec = null;
+  $('aqWrap').hidden = !aqPts.length;
+  $('aqPending').hidden = !!aqPts.length;
+
+  for (const id of ids) {
+    const cv = $(id);
+    if (cv._spec) drawChart(cv, null);
+  }
 }
 
-function renderSummary() {
-  const rl = S.rl, now = Date.now();
-  const head = $('headline'), sub = $('subline');
-  const lines = [];
-  let h = 'Tap Refresh to pull radar and models';
-  if (rl) {
-    const fut = rl.P.filter(p => p.t >= now - 2.5 * MIN);
-    const maxP = Math.round(Math.max(0, ...fut.map(p => p.v)));
-    if (rl.rainingNow) {
-      h = 'Raining now';
-      const end = fut.find((p, i) => p.v < 30 && (fut[i + 1]?.v ?? 0) < 30);
-      lines.push(end ? `Likely easing around ${fmtTime(end.t)}` : `Likely continues past ${fmtTime(rl.P[rl.P.length - 1].t)}`);
-    } else {
-      const likely = fut.find(p => p.v >= 50), poss = fut.find(p => p.v >= 25);
-      if (likely) {
-        const m = Math.max(0, Math.round((likely.t - now) / MIN));
-        h = m <= 2 ? 'Rain likely any minute' : `Rain likely in ~${m} min`;
-        lines.push(`Around ${fmtTime(likely.t)} · peaks at ${maxP}%`);
-      } else if (poss) {
-        h = `Rain possible around ${fmtTime(poss.t)}`;
-        lines.push(`Radar tops out at ${maxP}% in the next 2 h`);
-      } else {
-        h = 'No rain on radar for the next 2 h';
-      }
-    }
-    const bits = [];
-    if (rl.nearest && !rl.rainingNow) bits.push(`Nearest rain ${Math.round(rl.nearest.km)} km ${rl.nearest.dir}`);
-    if (rl.motion && rl.motion.kmh > 3) bits.push(`moving ${rl.motion.toward} at ${Math.round(rl.motion.kmh)} km/h`);
-    if (bits.length) lines.push(bits.join(' · '));
+// ─── words ──────────────────────────────────────────────────────────────────
+function skyWord(c) {
+  if (c == null) return null;
+  if (c < 15) return 'sunny';
+  if (c < 40) return 'mostly sunny';
+  if (c < 70) return 'partly cloudy';
+  if (c < 90) return 'mostly cloudy';
+  return 'overcast';
+}
+function windWord(sus) {
+  if (sus == null) return null;
+  if (sus < 8) return 'light wind';
+  if (sus < 15) return 'breezy';
+  if (sus < 22) return 'windy';
+  return 'very windy';
+}
+
+function daysOut() { return (PRELIMS.a - Date.now()) / (24 * HOUR); }
+
+function milestones() {
+  const m = S.fc?.meta || {}, out = [], now = Date.now();
+  // CAMS: each run reaches (init + horizon); find the first run whose horizon reaches Saturday morning.
+  if (m.cams && m.cams.end < PRELIMS.a) {
+    const horizon = m.cams.end - m.cams.init, lat = m.cams.avail - m.cams.init;
+    const init = m.cams.init + Math.ceil((PRELIMS.a - horizon - m.cams.init) / m.cams.every) * m.cams.every;
+    out.push({ t: init + lat, what: 'Air-quality forecast first reaches Saturday morning' });
   }
-  if (S.model) {
-    const mo = S.model, end = now + 12 * HOUR, bits = [];
-    if (mo.nbm) {
-      let b = { v: -1, t: 0 };
-      mo.nbm.times.forEach((t, i) => { if (t - 30 * MIN >= now && t - 30 * MIN <= end && mo.nbm.pop[i] > b.v) b = { v: mo.nbm.pop[i], t: t - 30 * MIN }; });
-      if (b.v >= 0) bits.push(b.v >= 20 ? `NBM peaks at ${b.v}% around ${fmtTime(b.t)}` : `NBM dry (max ${b.v}%)`);
-    }
-    if (mo.hrrr) {
-      const wet = mo.hrrr.times.map((t, i) => ({ t: t - 7.5 * MIN, v: mo.hrrr.nb[i], ok: mo.hrrr.valid[i] }))
-        .filter(p => p.ok && p.t >= now && p.t <= end && p.v >= 50);
-      bits.push(wet.length ? `HRRR has rain nearby ${fmtTime(wet[0].t)}–${fmtTime(wet[wet.length - 1].t)}` : 'HRRR mostly dry nearby');
-    }
-    if (bits.length) lines.push('Models: ' + bits.join(' · '));
-    if (!rl) {
-      const pk = modelPeak(now, end);
-      h = pk.v >= 50 ? 'Models favor rain later' : pk.v >= 20 ? 'Some rain chance later' : 'Dry for the next 12 h';
-    }
+  // HRRR: the 00/06/12/18Z runs go out 48 h.
+  if (!hasHrrr()) {
+    const init = Math.ceil((PRELIMS.a - 48 * HOUR) / (6 * HOUR)) * 6 * HOUR;
+    if (init + 2 * HOUR > now) out.push({ t: init + 2 * HOUR, what: 'HRRR (storm-scale) starts covering Saturday' });
   }
-  head.textContent = h;
-  sub.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+  return out.sort((a, b) => a.t - b.t);
 }
 
 function nextRefresh() {
-  const now = Date.now(), rl = S.rl, mo = S.model;
-  if (!rl && !mo) return null;
-  const radarNext = rl ? rl.T0 + 5 * MIN + 90e3 : now + 5 * MIN;
-  let hrrrNext = null;
-  if (mo?.hrrrMeta) {
-    hrrrNext = mo.hrrrMeta.avail + mo.hrrrMeta.every;
-    if (hrrrNext < now) hrrrNext = now + 10 * MIN;
+  const m = S.fc?.meta || {}, now = Date.now(), d = daysOut();
+  // next run of a model; `only12` = ECMWF, whose 06Z/18Z runs stop short of Saturday
+  const nextRun = (mm, label, only12) => {
+    if (!mm) return null;
+    let init = mm.init + mm.every;
+    if (only12) while (new Date(init).getUTCHours() % 12) init += mm.every;
+    const z = String(new Date(init).getUTCHours()).padStart(2, '0') + 'Z';
+    const t = init + (mm.avail - mm.init);
+    return t < now ? { t: now + 15 * MIN, what: `${label} ${z} run, landing any minute` } : { t, what: `${label} ${z} run` };
+  };
+  const ms = milestones();
+  let c = [];
+  if (now > FINALS.b) return null;
+  if (d <= 2) {
+    c = [nextRun(m.nbm, 'NBM'), nextRun(m.hrrr, 'HRRR')].filter(Boolean);
+    const best = c.sort((a, b) => a.t - b.t)[0];
+    return { ...best, why: d <= 0.75
+      ? 'It\'s close now. NBM and HRRR update every hour. For rain, use Live radar.'
+      : 'Inside 48 hours, NBM and HRRR refresh hourly and can shift timing and wind.' };
   }
-  const fut = rl ? rl.P.filter(p => p.t >= now) : [];
-  const soon = fut.find(p => p.v >= 20);
-  const leadSoon = soon ? (soon.t - now) / MIN : null;
-  const pk = modelPeak(now, now + 12 * HOUR);
-  const pk3 = modelPeak(now, now + 3 * HOUR);
+  c = [nextRun(m.ecmwf, 'ECMWF', true), nextRun(m.gfs, 'GFS')].filter(Boolean);
+  if (ms[0]) c.push(ms[0]);
+  const best = c.sort((a, b) => a.t - b.t)[0];
+  return best && { ...best, why: `${Math.round(d)} days out. The big global models run every 6 hours, and nothing meaningful changes between runs. Once or twice a day is plenty until Thursday.` };
+}
 
-  if (rl && (rl.rainingNow || (leadSoon != null && leadSoon <= 60))) {
-    return { t: Math.max(radarNext, now + MIN), what: 'next radar scan',
-      why: rl.rainingNow ? 'It\'s raining at your spot. Each 5-min scan updates when it ends.'
-        : 'Rain is close. Each new 5-min scan sharpens the arrival time.' };
+function renderSummary() {
+  const fc = S.fc;
+  const head = $('headline'), sub = $('subline'), conf = $('conf');
+  if (!fc) { head.textContent = 'Tap Refresh to pull Saturday\'s forecast'; sub.innerHTML = ''; conf.textContent = ''; return; }
+  const nbm = fc.nbm || {}, ens = fc.ens || {};
+  const tP = windowed(nbm.temperature_2m, PRELIMS.a, PRELIMS.b), tF = windowed(nbm.temperature_2m, FINALS.a, FINALS.b);
+  const feelsP = windowed(nbm.apparent_temperature, PRELIMS.a, PRELIMS.b);
+  const cloudMid = windowed(nbm.cloud_cover, CDT(10), CDT(17));
+  const cloudAvg = cloudMid.length ? cloudMid.reduce((s, v) => s + v, 0) / cloudMid.length : null;
+  const ensCloud = (ens.cloud_cover || []).filter(p => p.t >= CDT(10) && p.t <= CDT(17));
+  const cloudSpread = ensCloud.length ? ensCloud.reduce((s, p) => s + (p.hi - p.lo), 0) / ensCloud.length : 0;
+  const susMax = maxOf(windowed(nbm.wind_speed_10m, PRELIMS.a, FINALS.b));
+  const susMin = minOf(windowed(nbm.wind_speed_10m, PRELIMS.a, FINALS.b));
+  const gustMax = maxOf(windowed(nbm.wind_gusts_10m, PRELIMS.a, FINALS.b));
+  const rainMax = maxOf((ens.precipitation || []).filter(p => p.t >= PRELIMS.a && p.t <= FINALS.b).map(p => 100 * p.wet));
+
+  const bits = [];
+  if (tP.length) bits.push(`${r0(tP[0])}° → ${r0(maxOf(tP))}°`);
+  const sky = skyWord(cloudAvg);
+  if (sky) bits.push(sky + (cloudSpread > 55 ? ' (clouds uncertain)' : ''));
+  const ww = windWord(susMax);
+  if (ww) bits.push(ww);
+  if (rainMax != null && rainMax >= 30) bits.push(`${Math.round(rainMax)}% rain risk`);
+  head.textContent = bits.length ? cap(bits.join(', ')) : 'Forecast pulled';
+
+  const lines = [];
+  if (tP.length) lines.push(`<b>Prelims</b> 7:45 AM–4:15 PM: ${r0(minOf(tP))}–${r0(maxOf(tP))}°F${feelsP.length ? `, feels up to ${r0(maxOf(feelsP))}°F` : ''}`);
+  if (tF.length) lines.push(`<b>Finals</b> ~7:30–10:30 PM: ${r0(tF[0])}° → ${r0(tF[tF.length - 1])}°F`);
+  if (susMax != null) lines.push(`<b>Wind</b> ${r0(susMin)}–${r0(susMax)} mph, gusts to ${r0(gustMax)}`);
+  if (rainMax != null) lines.push(`<b>Rain</b> ${rainMax < 10 ? 'unlikely' : 'possible'}: at most ${Math.round(rainMax)}% of runs show rain in any hour`);
+  const aqPts = (fc.aq?.pts || []).filter(p => p.t >= PRELIMS.a && p.t <= FINALS.b);
+  if (aqPts.length) {
+    const mx = maxOf(aqPts.map(p => p.v));
+    lines.push(`<b>Air quality</b> AQI up to ${r0(mx)} (${aqiCat(mx).label})`);
+  } else {
+    const ms = milestones().find(x => x.what.startsWith('Air'));
+    lines.push(`<b>Air quality</b> forecast reaches Saturday ~${ms ? fmtDayTime(ms.t) : 'later this week'}${fc.aq?.now != null ? ` · right now AQI ${fc.aq.now} (${aqiCat(fc.aq.now).label})` : ''}`);
   }
-  if (leadSoon != null) {
-    return { t: Math.max(radarNext, now + 15 * MIN), what: 'radar',
-      why: `Rain is about ${Math.round(leadSoon)} min out. Its track firms up as it gets closer.` };
+  if (fc.sun) lines.push(`<b>Sun</b> rises ${fmtTime(fc.sun.rise)}, sets ${fmtTime(fc.sun.set)}. Finals run after dark.`);
+  sub.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+
+  const d = daysOut();
+  const spread = (ens.temperature_2m || []).filter(p => p.t >= CDT(12) && p.t <= CDT(16));
+  const sp = spread.length ? Math.round(spread.reduce((s, p) => s + (p.hi - p.lo), 0) / spread.length) : null;
+  conf.textContent = d > 0.5
+    ? `${d >= 1.5 ? Math.round(d) + ' days' : 'About a day'} out. The 82 runs span about ${sp ?? '?'}°F in the afternoon, so trust the ranges more than the line.`
+    : 'Event day. Hourly models plus Live radar are your best tools now.';
+}
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+function renderBand() {
+  const fc = S.fc, el = $('bandStats'), flag = $('bandFlag');
+  const b = SCHEDULE.find(x => x.name === S.band);
+  if (!fc || !b) { flag.hidden = true; return; }
+  const nbm = fc.nbm || {}, ens = fc.ens || {};
+  const t = b.t, mid = t + 7.5 * MIN;     // middle of the 15-min slot
+  const temp = at(nbm.temperature_2m, mid), feels = at(nbm.apparent_temperature, mid);
+  const tlo = at(ens.temperature_2m, mid, 'lo'), thi = at(ens.temperature_2m, mid, 'hi');
+  const sus = at(nbm.wind_speed_10m, mid), gust = at(nbm.wind_gusts_10m, mid), dir = at(nbm.wind_direction_10m, mid);
+  const cloud = at(nbm.cloud_cover, mid), clo = at(ens.cloud_cover, mid, 'lo'), chi = at(ens.cloud_cover, mid, 'hi');
+  const wet = at((ens.precipitation || []).map(p => ({ t: p.t, v: 100 * p.wet })), mid);
+  const uv = at(fc.best?.uv_index, mid);
+  const aq = (fc.aq?.pts || []).find(p => Math.abs(p.t - mid) <= 30 * MIN);
+  const stat = (k, v, r) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="r">${r || '&nbsp;'}</div></div>`;
+  el.innerHTML = [
+    stat('Temperature', `${r0(temp)}°F`, tlo != null ? `range ${r0(tlo)}–${r0(thi)}°` : ''),
+    stat('Feels like', `${r0(feels)}°F`, uv != null && uv >= 0.5 ? `UV ${uv.toFixed(1)}` : ''),
+    stat('Wind', `${r0(sus)} mph`, `${gust != null ? 'gusts ' + r0(gust) : ''}${dir != null ? ' · from ' + compass(dir) : ''}`),
+    stat('Clouds', `${r0(cloud)}%`, clo != null ? `range ${r0(clo)}–${r0(chi)}% · ${skyWord(cloud) || ''}` : skyWord(cloud) || ''),
+    stat('Rain chance', `${wet != null ? Math.round(wet) : '–'}%`, 'share of 82 runs'),
+    stat('Air quality', aq ? r0(aq.v) : '–', aq ? aqiCat(aq.v).label : 'forecast not out yet'),
+  ].join('');
+  const warn = [];
+  if (feels != null && feels >= 90) warn.push(`Feels like ${r0(feels)}°F. Hot in uniform; plan water and shade.`);
+  if (gust != null && gust >= 25) warn.push(`Gusts near ${r0(gust)} mph. Watch flags, props and backdrops.`);
+  else if (sus != null && sus >= 15) warn.push(`Sustained ${r0(sus)} mph. Expect drift on flags and sound.`);
+  if (wet != null && wet >= 30) warn.push(`${Math.round(wet)}% of runs show rain at this hour.`);
+  flag.hidden = !warn.length;
+  flag.textContent = '⚠ ' + warn.join(' ');
+}
+
+function renderSched() {
+  const el = $('sched'), total = T1 - T0;
+  const segs = [];
+  let t = T0;
+  for (const b of BLOCKS) {
+    if (b.a > t) segs.push({ a: t, b: b.a, label: '' });
+    segs.push(b);
+    t = b.b;
   }
-  if (pk3.v >= 30) {
-    const t = Math.max(radarNext, Math.min(hrrrNext ?? Infinity, now + 20 * MIN));
-    return { t, what: 'radar', why: 'Models show rain possible within 3 h. New storms only show on radar once they form, so check radar again soon.' };
-  }
-  if (pk.v >= 20 && pk.first30 != null) {
-    const t = Math.max(radarNext, Math.min(hrrrNext ?? Infinity, pk.first30 - HOUR));
-    return { t, what: hrrrNext && Math.abs(t - hrrrNext) < MIN ? 'next HRRR run' : 'radar',
-      why: `Models' rain window starts around ${fmtTime(pk.first30)}. Refresh about an hour before that, or when the next HRRR run lands.` };
-  }
-  if (hrrrNext) {
-    return { t: hrrrNext, what: 'next HRRR run', why: 'Nothing on radar or in the models. Refreshing sooner won\'t change the answer.' };
-  }
-  return { t: now + 30 * MIN, what: 'radar', why: 'Nothing nearby.' };
+  if (t < T1) segs.push({ a: t, b: T1, label: '' });
+  el.innerHTML = segs.map(s => `<div class="${s.label === 'Prelims' || s.label === 'Finals' ? 'on' : ''}" style="flex:${(s.b - s.a) / total}" title="${s.label}">${(s.b - s.a) / total > 0.08 ? s.label : ''}</div>`).join('');
+  const b = SCHEDULE.find(x => x.name === S.band);
+  $('schedNote').textContent = `Prelims 7:45 AM–4:15 PM (28 bands, BOA schedule) · prelims awards ~4:30 · finals ~7:30–10:30 PM, 12 bands (estimated)${b ? ` · ${b.name} performs at ${fmtTime(b.t)}` : ''}.`;
 }
 
 function renderStamps() {
-  const now = Date.now();
-  if (S.rl) {
-    $('radarStamp').textContent = `scan ${fmtTime(S.rl.T0)} · ${fmtAgo(S.rl.T0)}`;
-  } else $('radarStamp').textContent = '';
-  const mo = S.model;
-  if (mo?.hrrrMeta) {
-    const z = new Date(mo.hrrrMeta.init).getUTCHours();
-    $('modelStamp').textContent = `HRRR ${String(z).padStart(2, '0')}Z run`;
-  } else $('modelStamp').textContent = '';
-
-  const nx = nextRefresh(), el = $('nextPull');
-  if (!nx) { el.hidden = true; return; }
+  const el = $('nextPull');
+  if (!S.fc) { el.hidden = true; return; }
   el.hidden = false;
-  const due = nx.t <= now;
-  const pulled = S.pulledAt ? `Pulled ${fmtTime(S.pulledAt)} (${fmtAgo(S.pulledAt)})` : '';
-  el.innerHTML = `<div>${pulled}</div>`
-    + `<div>Next useful refresh: <b class="${due ? 'stale' : ''}">${due ? 'due now' : `${fmtTime(nx.t)} (${fmtIn(nx.t)})`}</b> · ${nx.what}</div>`
-    + `<div class="why">${nx.why}</div>`;
-}
-
-// ─── location + pull orchestration ──────────────────────────────────────────
-function renderPlace() {
-  const l = S.loc;
-  const acc = l.acc ? ` · ±${Math.round(l.acc)} m` : '';
-  $('place').textContent = `${l.name} · ${l.lat.toFixed(4)}, ${l.lon.toFixed(4)}${acc}`;
-}
-
-function setStatus(msg, err) {
-  const el = $('status');
-  el.textContent = msg || '';
-  el.classList.toggle('err', !!err);
-}
-
-function saveCache() {
-  try {
-    localStorage.setItem('rainchance.v1.' + S.loc.key, JSON.stringify({ loc: S.loc, pulledAt: S.pulledAt, rl: S.rl, model: S.model }));
-  } catch (e) { /* storage unavailable: fine */ }
-}
-function loadCache(key) {
-  try {
-    const raw = localStorage.getItem('rainchance.v1.' + key);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
-}
-
-function resetView() {
-  S.rl = null; S.rh = null; S.model = null; S.pulledAt = null; S.tiles = null; S.extrap.clear();
-  stopPlay();
-  $('mapEmpty').hidden = false; $('mapTime').hidden = true;
-  $('btnPlay').disabled = true; $('lead').disabled = true;
-  $('motion').textContent = '';
-}
-
-function applyCache(c) {
-  if (!c) return false;
-  S.rl = c.rl; S.model = c.model; S.pulledAt = c.pulledAt;
-  $('mapEmpty').textContent = 'Showing your last pull. Tap Refresh to load the map.';
-  renderAll();
-  return true;
+  const now = Date.now(), nx = nextRefresh();
+  const ms = milestones().filter(m => m.t > now);
+  let html = `<div>Pulled ${fmtWhen(S.pulledAt)} (${fmtAgo(S.pulledAt)})</div>`;
+  if (nx) {
+    const due = nx.t <= now;
+    html += `<div>Next useful refresh: <b class="${due ? 'stale' : ''}">${due ? 'due now' : `${fmtWhen(nx.t)} (${fmtIn(nx.t)})`}</b> · ${nx.what}</div>`
+      + `<div class="why">${nx.why}</div>`;
+  }
+  if (ms.length) html += `<ul>${ms.map(m => `<li>${m.what}: ~${fmtDayTime(m.t)}</li>`).join('')}</ul>`;
+  el.innerHTML = html;
+  const m = S.fc.meta?.cams;
+  $('aqStamp').textContent = m ? `CAMS ${String(new Date(m.init).getUTCHours()).padStart(2, '0')}Z run` : '';
+  const pend = $('aqPending');
+  if (!(S.fc.aq?.pts || []).some(p => p.t >= T0 && p.t <= T1)) {
+    const mm = milestones().find(x => x.what.startsWith('Air'));
+    pend.innerHTML = `The air-quality forecast doesn't reach Saturday yet.${mm ? `<br>Expected ~<b>${fmtDayTime(mm.t)}</b>.` : ''}`
+      + (S.fc.aq?.now != null ? `<br><span class="muted">Right now in Prosper: AQI ${S.fc.aq.now} (${aqiCat(S.fc.aq.now).label}).</span>` : '');
+  }
 }
 
 function renderAll() {
-  renderPlace();
-  renderSummary();
-  renderCharts();
-  renderStamps();
-  const mo = S.rl?.motion;
-  $('motion').textContent = S.rl
-    ? (mo ? `Storm motion measured from ${mo.n} echo blocks: toward ${mo.toward} at ${Math.round(mo.kmh)} km/h. Arrow ≈ 30 min of travel.`
-          : 'Not enough echo to measure motion, so rain is shown staying put.')
-    : '';
+  renderSummary(); renderBand(); renderSched(); renderCharts(); renderStamps();
 }
 
-async function pull() {
+// ─── orchestration ──────────────────────────────────────────────────────────
+function setStatus(msg, err) { const el = $('status'); el.textContent = msg || ''; el.classList.toggle('err', !!err); }
+
+async function refresh() {
   if (S.busy) return;
   S.busy = true;
-  stopPlay();
-  for (const b of ['btnRefresh', 'btnGps', 'btnHome']) $(b).disabled = true;
-  setStatus('Pulling…');
-  const loc = { ...S.loc };
-  const msgs = { radar: 'radar…', models: 'models…' };
-  const show = () => setStatus('Pulling ' + Object.values(msgs).join(' · '));
-  show();
-  const [rad, mod] = await Promise.allSettled([
-    pullRadar(loc, m => { msgs.radar = m; show(); }),
-    pullModels(loc).then(r => { msgs.models = 'models ✓'; show(); return r; }),
-  ]);
-  const errs = [];
-  if (rad.status === 'fulfilled') {
-    S.rl = rad.value.rl; S.rh = rad.value.rh; S.extrap.clear();
-    S.tiles = loadTiles(S.rh.box);
-    $('mapEmpty').hidden = true;
-    $('btnPlay').disabled = false; $('lead').disabled = false;
-    setLead(0);
-  } else {
-    errs.push('Radar failed: ' + rad.reason.message);
-    S.rl = null; S.rh = null;
-    $('mapEmpty').hidden = false; $('mapEmpty').textContent = 'Radar unavailable this pull';
+  $('btnRefresh').disabled = true;
+  setStatus('Pulling models, ensembles and air quality…');
+  try {
+    S.fc = await pull();
+    S.pulledAt = Date.now();
+    try { localStorage.setItem('boa.v1', JSON.stringify({ fc: S.fc, pulledAt: S.pulledAt })); } catch (e) { /* fine */ }
+    setStatus(S.fc.errors.join(' · '), S.fc.errors.length > 0);
+  } catch (e) {
+    setStatus('Pull failed: ' + e.message, true);
   }
-  if (mod.status === 'fulfilled') {
-    S.model = mod.value;
-    if (mod.value.errors.length) errs.push(...mod.value.errors);
-  } else {
-    errs.push('Models failed: ' + mod.reason.message);
-    S.model = null;
-  }
-  S.pulledAt = Date.now();
-  saveCache();
   renderAll();
-  setStatus(errs.join(' · '), errs.length > 0);
   S.busy = false;
-  for (const b of ['btnRefresh', 'btnGps', 'btnHome']) $(b).disabled = false;
-}
-
-function useGps() {
-  if (!('geolocation' in navigator)) { setStatus('This browser has no location access.', true); return; }
-  setStatus('Finding your location…');
-  $('btnGps').disabled = true;
-  navigator.geolocation.getCurrentPosition(pos => {
-    $('btnGps').disabled = false;
-    S.loc = { key: 'gps', name: 'My location', lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy };
-    resetView();
-    renderAll();
-    pull();
-  }, err => {
-    $('btnGps').disabled = false;
-    const why = err.code === 1 ? 'Location permission was denied. Opened as a local file? Try hosting it over https.'
-      : err.code === 2 ? 'Location unavailable.' : 'Location timed out.';
-    setStatus(why, true);
-  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
-}
-
-function goHome() {
-  S.loc = { ...HOME };
-  resetView();
-  renderAll();
-  pull();
+  $('btnRefresh').disabled = false;
 }
 
 // ─── boot ───────────────────────────────────────────────────────────────────
-hookChart($('chartA'), $('tipA'));
-hookChart($('chartB'), $('tipB'));
-$('rampA').innerHTML = rampHTML();
-$('rampB').innerHTML = rampHTML();
-$('btnRefresh').addEventListener('click', pull);
-$('btnGps').addEventListener('click', useGps);
-$('btnHome').addEventListener('click', goHome);
-$('btnPlay').addEventListener('click', togglePlay);
-$('lead').addEventListener('input', e => { stopPlay(); setLead(+e.target.value); });
-window.addEventListener('resize', () => { renderCharts(); });
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-  if (S.rh) S.tiles = loadTiles(S.rh.box);
-  renderCharts(); scheduleMap();
-});
-setInterval(() => { renderStamps(); renderSummary(); renderCharts(); }, 30000);
-
-renderPlace();
-if (!applyCache(loadCache('home'))) renderAll();
+{
+  const sel = $('band');
+  sel.innerHTML = SCHEDULE.map(b => `<option value="${b.name}">${fmtTime(b.t)} · ${b.name}</option>`).join('');
+  if (!SCHEDULE.some(b => b.name === S.band)) S.band = 'Lebanon Trail';
+  sel.value = S.band;
+  sel.addEventListener('change', () => {
+    S.band = sel.value;
+    try { localStorage.setItem('boa.band', S.band); } catch (e) { /* fine */ }
+    renderBand(); renderSched(); renderCharts();
+  });
+}
+$('radarLink').href = `radar.html?lat=${VENUE.lat}&lon=${VENUE.lon}&name=${encodeURIComponent(VENUE.name + ', Prosper')}&short=Stadium`;
+for (const id of ['cTemp', 'cWind', 'cCloud', 'cRain', 'cAQ']) hookChart($(id));
+$('btnRefresh').addEventListener('click', refresh);
+window.addEventListener('resize', renderCharts);
+setInterval(renderStamps, 30000);
+try {
+  const c = JSON.parse(localStorage.getItem('boa.v1') || 'null');
+  if (c) { S.fc = c.fc; S.pulledAt = c.pulledAt; }
+} catch (e) { /* fine */ }
+renderAll();
 </script>
 </body>
 </html>
