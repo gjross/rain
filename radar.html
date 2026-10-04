@@ -166,7 +166,7 @@ footer { color: var(--muted); font-size: 11px; text-align: center; margin-top: 8
   <div class="actions">
     <button id="btnRefresh" class="primary">↻ Refresh</button>
     <button id="btnGps">📍 My location</button>
-    <button id="btnHome">⌂ Hardin</button>
+    <button id="btnHome">⌂ Stadium</button>
   </div>
   <div id="status" class="status"></div>
 
@@ -236,7 +236,7 @@ footer { color: var(--muted); font-size: 11px; text-align: center; margin-top: 8
 'use strict';
 
 // ─── constants ──────────────────────────────────────────────────────────────
-const HOME = { key: 'home', name: '4201 S Hardin Blvd, McKinney', lat: 33.15666, lon: -96.66064, short: 'Hardin' };
+const HOME = { key: 'boa-prosper', name: "Children's Health Stadium, Prosper", lat: 33.26076, lon: -96.80426, short: 'Stadium' };
 // A link can start the page somewhere else: radar.html?lat=..&lon=..&name=..&short=..
 {
   const q = new URLSearchParams(location.search), lat = parseFloat(q.get('lat')), lon = parseFloat(q.get('lon'));
